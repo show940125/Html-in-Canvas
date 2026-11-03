@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Canvas Clipper 摘錄整理台",
+  "version": "0.2.0",
+  "description": "圖文摘錄、聚焦閱讀、並排比較、主題框、標籤、關係線與本機完整備份。",
+  "minimum_chrome_version": "156",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "contextMenus"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Canvas Clipper"
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; img-src 'self' blob:;"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy/eHeY4z525lk7lohNexA6QdSjfSAmDFLq3PZ1yQTbiYBtK6hoyrQhenj4rabxVFWRSCx3xX5dk5vVXsveOIGBeWHonta37iL3WwZ//+iEcWv9Fep0cPvX7smkjpduS2FwBQZQ6/iEZgCW8qjZaO0Hcwktg7nxo78sYvYAi3ynHZ5TBxSzeVc/g6pdpDrunVoYy/06TkGeO58hifx+CmTcCbiy9qf25PeBmBnjFqKYkKYTnexo59dpsMLIfTXhBl00ZNX3jG8Z+gnKVMDrTMk3x/y3jLYzqYuYLx/JuqMw2DhIwvKpW4QjB8UjzJGl5BsjEGvZI3RiSSFzkRMLnsLQIDAQAB",
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ]
+}

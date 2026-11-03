@@ -1,0 +1,24 @@
+# Local installs and generated output (never publish user data).
+dist/
+**/dist/
+**/node_modules/
+**/.venv/
+**/archive/
+**/output/
+**/release/
+**/__pycache__/
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*profile*/
+**/*backup*.zip
+local/
+.codex/
+.codexwolf/
+Canvas Clipper/開始使用.html
+Canvas Clipper/驗收紀錄.md
+Canvas Clipper/CURRENT_PROGRESS.md
+Canvas Clipper/_d_meta.json
+Canvas Clipper/extension-identity.json

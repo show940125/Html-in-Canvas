@@ -1,0 +1,13 @@
+import { copyFile, readFile, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const legacy=path.resolve(root,'..','dist');
+if(path.dirname(legacy)!==path.dirname(root))throw new Error('Legacy bridge path escaped suite root');
+const before=await readFile(path.join(legacy,'manifest.json'));
+for(const name of ['migration.html','migration.js','migration.css'])await copyFile(path.join(root,'public',name),path.join(legacy,name));
+const after=await readFile(path.join(legacy,'manifest.json'));
+if(!before.equals(after))throw new Error('Legacy manifest changed');
+await writeFile(path.join(root,'archive','v0.1.0','legacy-bridge.json'),JSON.stringify({legacyPath:legacy,manifestSha256:createHash('sha256').update(before).digest('hex'),files:['migration.html','migration.js','migration.css']},null,2));
+console.log('Read-only export bridge added; existing manifest and application files unchanged.');

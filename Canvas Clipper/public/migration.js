@@ -1,0 +1,7 @@
+let projects=[];
+document.querySelector('#identity').textContent='目前版本 ID：'+(globalThis.chrome?.runtime?.id||location.origin);
+const request=indexedDB.open('canvas-clipper');
+request.onupgradeneeded=()=>{request.transaction.abort();document.querySelector('#status').textContent='這個來源沒有舊版資料庫。請從原本安裝的 Canvas Clipper 開啟此頁。';};
+request.onerror=()=>{document.querySelector('#status').textContent='無法讀取舊版資料，請確認正在使用原本的擴充功能。';};
+request.onsuccess=()=>{const db=request.result;if(!db.objectStoreNames.contains('projects')){db.close();return;}const tx=db.transaction('projects','readonly');const all=tx.objectStore('projects').getAll();all.onsuccess=()=>{projects=all.result;document.querySelector('#status').textContent=`已找到 ${projects.length} 個專案、${projects.reduce((n,p)=>n+(p.cards?.length||0),0)} 張卡片。`;document.querySelector('#export').disabled=false;};tx.oncomplete=()=>db.close();};
+document.querySelector('#export').onclick=()=>{const data={format:'canvas-clipper-workspace',version:1,exportedAt:new Date().toISOString(),projects};const text=JSON.stringify(data,null,2);const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='canvas-clipper-v01-workspace-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);document.querySelector('#status').textContent=`已匯出 ${projects.length} 個專案。原資料維持不變；請在新版匯入下載的 JSON。`;};
