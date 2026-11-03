@@ -1,3 +1,4 @@
+from browser_support import chrome_launch_options
 from pathlib import Path
 from functools import partial
 from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
@@ -14,7 +15,7 @@ def check(name,passed,detail=None):
  if not passed:raise AssertionError(str(detail))
 try:
  with sync_playwright() as p:
-  browser=p.chromium.launch(executable_path=r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',headless=True,args=['--enable-features=CanvasDrawElement'])
+  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement'])
   page=browser.new_page(viewport={'width':1600,'height':1050});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   try:
    page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.get_by_role('tab',name='◇ 特效展示').click()

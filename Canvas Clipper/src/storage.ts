@@ -8,9 +8,10 @@ interface ClipperDB extends DBSchema {
   preferences: { key: string; value: unknown };
 }
 let connection: Promise<IDBPDatabase<ClipperDB>> | undefined;
-const database = () => connection ??= openDB<ClipperDB>('canvas-clipper', 2, { upgrade(db, oldVersion, _newVersion, tx) {
+const database = () => connection ??= openDB<ClipperDB>('canvas-clipper', 3, { upgrade(db, oldVersion, _newVersion, tx) {
   if(oldVersion<1){db.createObjectStore('projects',{keyPath:'id'});db.createObjectStore('settings');}
-  if(oldVersion<2){db.createObjectStore('assets',{keyPath:'id'});db.createObjectStore('preferences');
+  if(oldVersion<2){db.createObjectStore('assets',{keyPath:'id'});db.createObjectStore('preferences');}
+  if(oldVersion<3){
     void tx.objectStore('projects').openCursor().then(async cursor=>{while(cursor){await cursor.update(normalizeProject(cursor.value));cursor=await cursor.continue();}});
   }
 } }).catch(error => { connection = undefined; throw error; });

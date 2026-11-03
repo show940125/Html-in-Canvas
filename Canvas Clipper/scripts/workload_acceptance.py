@@ -1,3 +1,4 @@
+from browser_support import chrome_launch_options
 """20 materials / six rasters / 20 edges; native drag latency and 150% DPI."""
 from pathlib import Path
 from functools import partial
@@ -28,7 +29,7 @@ with zipfile.ZipFile(target,'w') as z:
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'dist')));Thread(target=server.serve_forever,daemon=True).start()
 try:
  with sync_playwright() as p:
-  browser=p.chromium.launch(executable_path=r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',headless=True,args=['--enable-features=CanvasDrawElement'])
+  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement'])
   try:
    context=browser.new_context(viewport={'width':1920,'height':2000});page=context.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.locator('input[accept^=".json"]').set_input_files(target);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');page.locator('.save-state.saved').wait_for();page.wait_for_timeout(400)
    check('full workload loads in native Canvas',page.locator('.board-surface').get_attribute('data-mode')=='native' and page.locator('.relation').count()==20 and page.locator('.card-thumbnail').count()==6)

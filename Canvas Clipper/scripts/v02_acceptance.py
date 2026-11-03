@@ -1,3 +1,4 @@
+from browser_support import chrome_launch_options
 """End-to-end acceptance of the v0.2 reading desk in isolated Chrome 156."""
 from pathlib import Path
 from functools import partial
@@ -25,7 +26,7 @@ def project_data(page):
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'dist')));Thread(target=server.serve_forever,daemon=True).start()
 try:
  with sync_playwright() as p:
-  browser=p.chromium.launch(executable_path=r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',headless=True,args=['--enable-features=CanvasDrawElement'])
+  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement'])
   context=browser.new_context(viewport={'width':1680,'height':1100},device_scale_factor=1)
   page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   try:

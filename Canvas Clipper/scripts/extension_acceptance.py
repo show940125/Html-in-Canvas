@@ -1,3 +1,4 @@
+from browser_support import chrome_launch_options
 """Load the real MV3 build into an isolated installed Chrome 156 profile.
 
 CDP's official Extensions.triggerAction invokes the browser action, granting
@@ -33,7 +34,7 @@ Thread(target=server.serve_forever,daemon=True).start()
 base=f'http://127.0.0.1:{server.server_port}'
 try:
     with sync_playwright() as p:
-        context=p.chromium.launch_persistent_context(str(OUT/('extension-profile-'+uuid.uuid4().hex[:8])),executable_path=r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',headless=True,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging','--enable-features=CanvasDrawElement'],viewport={'width':1600,'height':1000})
+        context=p.chromium.launch_persistent_context(str(OUT/('extension-profile-'+uuid.uuid4().hex[:8])),**chrome_launch_options(),headless=True,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging','--enable-features=CanvasDrawElement'],viewport={'width':1600,'height':1000})
         browser=context.browser
         cdp=browser.new_browser_cdp_session()
         extension_id=cdp.send('Extensions.loadUnpacked',{'path':str(ROOT/'dist')})['id']

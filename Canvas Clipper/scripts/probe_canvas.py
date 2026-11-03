@@ -1,3 +1,4 @@
+from browser_support import chrome_launch_options
 """Probe the installed Chrome engine in an isolated, disposable test profile."""
 from pathlib import Path
 import json
@@ -18,7 +19,7 @@ document.querySelector('#hit').onclick=()=>{window.diagnostic.clicks++};
 if(cv.requestPaint)cv.requestPaint();
 </script></html>"""
 with sync_playwright() as p:
-    browser=p.chromium.launch(executable_path=r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',headless=True,args=['--enable-features=CanvasDrawElement'])
+    browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement'])
     page=browser.new_page(viewport={'width':900,'height':600})
     page.set_content(HTML)
     page.wait_for_function('window.diagnostic.paints > 0 || window.diagnostic.error',timeout=10000)

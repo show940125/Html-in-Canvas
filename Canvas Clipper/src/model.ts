@@ -1,3 +1,4 @@
+import { isColor,isFrame,type FrameId } from './appearance';
 export interface RichNode { type: string; text?: string; attrs?: Record<string, unknown>; marks?: { type: string; attrs?: Record<string, unknown> }[]; content?: RichNode[] }
 export interface RichDoc { type: 'doc'; content: RichNode[] }
 export interface Clip {
@@ -5,8 +6,9 @@ export interface Clip {
   originalText: string; workingText: string; originalDoc: RichDoc; editedDoc: RichDoc;
   note: string; url: string; capturedAt: string; x: number; y: number;
   groupId?: string; tagIds: string[];
+  width?:number;height?:number;frame?:FrameId;color?:string;
 }
-export interface Group { id: string; title: string; color: string; x: number; y: number; width: number; height: number; collapsed: boolean }
+export interface Group { id: string; title: string; color: string; x: number; y: number; width: number; height: number; collapsed: boolean;frame?:FrameId;cardFrame?:FrameId;cardColor?:string; }
 export interface Tag { id: string; title: string; color: string }
 export const RELATION_KINDS = ['支持', '質疑', '補充', '相關'] as const;
 export interface Relation { id: string; from: string; to: string; kind: typeof RELATION_KINDS[number]; label: string }
@@ -16,6 +18,7 @@ export interface Project {
   outline: { groupIds: string[]; cardIds: string[] };
   view: { x: number; y: number; zoom: number };
   print: { fontSize: number; lineHeight: number; includeGraph: boolean };
+  readingProgress?:{cardId:string;nodePath:number[];offset:number};
 }
 export interface Capture { kind: Clip['kind']; title: string; text: string; url: string; capturedAt: string; doc?: RichDoc }
 export const MAX_TEXT = 500_000;
@@ -72,12 +75,12 @@ export function validateCapture(value: unknown): Capture {
 }
 export function createClip(capture: Capture, index: number): Clip {
   const doc=capture.doc||textDoc(capture.text);
-  return { id: crypto.randomUUID(), kind: capture.kind, title: capture.title, originalText: capture.text, workingText: capture.text, originalDoc: structuredClone(doc), editedDoc: structuredClone(doc), note: '', url: capture.url, capturedAt: capture.capturedAt, x: 48 + index % 3 * 344, y: 48 + Math.floor(index / 3) * 416, tagIds: [] };
+  return { id: crypto.randomUUID(), kind: capture.kind, title: capture.title, originalText: capture.text, workingText: capture.text, originalDoc: structuredClone(doc), editedDoc: structuredClone(doc), note: '', url: capture.url, capturedAt: capture.capturedAt, x: 48 + index % 3 * 344, y: 48 + Math.floor(index / 3) * 416, tagIds: [],width:308,height:374 };
 }
 export function normalizeProject(p: Project): Project {
   return { ...p, groups:p.groups||[],tags:p.tags||[],relations:p.relations||[],outline:p.outline||{groupIds:[],cardIds:p.cards.map(c=>c.id)},print:{...p.print,includeGraph:p.print.includeGraph??true},cards:p.cards.map(c=>({...c,tagIds:c.tagIds||[],originalDoc:c.originalDoc||textDoc(c.originalText),editedDoc:c.editedDoc||textDoc(c.workingText)})) };
 }
-export function exportProject(project: Project): string { return JSON.stringify({ format: 'canvas-clipper', version: 2, project: { ...project, title: project.title.trim() || '未命名專案' } }, null, 2); }
+export function exportProject(project: Project): string { return JSON.stringify({ format: 'canvas-clipper', version: 3, project: { ...project, title: project.title.trim() || '未命名專案' } }, null, 2); }
 function finite(v: unknown,min: number,max: number): v is number { return typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max; }
 export function validateProject(value: unknown, remap=true): Project {
   if(!value||typeof value!=='object')throw new Error('備份缺少專案。');
@@ -89,9 +92,9 @@ export function validateProject(value: unknown, remap=true): Project {
     if(!c||typeof c.workingText!=='string'||c.workingText.length>MAX_TEXT||typeof c.note!=='string'||c.note.length>MAX_TEXT||!finite(c.x,-1e7,1e7)||!finite(c.y,-1e7,1e7))throw new Error('卡片資料不正確。');
     const cid=id(c.id),capture=validateCapture({kind:c.kind,title:c.title,text:c.originalText,url:c.url,capturedAt:c.capturedAt,...(c.originalDoc?{doc:c.originalDoc}:{})});
     const editedDoc=c.editedDoc?validateDoc(c.editedDoc):textDoc(c.workingText);
-    return {...createClip(capture,0),id:cid,workingText:c.workingText,editedDoc,note:c.note,x:c.x,y:c.y,groupId:c.groupId,tagIds:c.tagIds||[]};
+    return {...createClip(capture,0),id:cid,workingText:c.workingText,editedDoc,note:c.note,x:c.x,y:c.y,groupId:c.groupId,tagIds:c.tagIds||[],...visualFields(c)};
   });
-  const groups=(p.groups||[]).map(g=>{if(!g||typeof g.title!=='string'||g.title.length>200||!GROUP_COLORS.includes(g.color)||!finite(g.x,-1e7,1e7)||!finite(g.y,-1e7,1e7)||!finite(g.width,200,1e6)||!finite(g.height,80,1e6))throw new Error('主題框資料無效。');return{id:id(g.id),title:g.title,color:g.color,x:g.x,y:g.y,width:g.width,height:g.height,collapsed:!!g.collapsed};});
+  const groups=(p.groups||[]).map(g=>{if(!g||typeof g.title!=='string'||g.title.length>200||!isColor(g.color)||!finite(g.x,-1e7,1e7)||!finite(g.y,-1e7,1e7)||!finite(g.width,200,1e6)||!finite(g.height,80,1e6))throw new Error('主題框資料無效。');return{id:id(g.id),title:g.title,color:g.color,x:g.x,y:g.y,width:g.width,height:g.height,collapsed:!!g.collapsed,...groupVisualFields(g)};});
   const tags=(p.tags||[]).map(t=>{if(!t||typeof t.title!=='string'||!t.title.trim()||t.title.length>80||!GROUP_COLORS.includes(t.color))throw new Error('標籤資料無效。');return{id:id(t.id),title:t.title,color:t.color};});
   const groupIds=new Set((p.groups||[]).map(g=>g.id)),tagIds=new Set((p.tags||[]).map(t=>t.id)),cardIds=new Set(p.cards.map(c=>c.id));
   cards.forEach(c=>{if(c.groupId&&!groupIds.has(c.groupId)||!Array.isArray(c.tagIds)||c.tagIds.some(t=>!tagIds.has(t)))throw new Error('卡片包含失效的分組或標籤。');c.groupId=c.groupId?mapping.get(c.groupId):undefined;c.tagIds=[...new Set(c.tagIds)].map(t=>mapping.get(t)!);});
@@ -99,20 +102,34 @@ export function validateProject(value: unknown, remap=true): Project {
   const relations=(p.relations||[]).map(r=>{const key=[r.from,r.to,r.kind].join(':');if(!r||!cardIds.has(r.from)||!cardIds.has(r.to)||r.from===r.to||!RELATION_KINDS.includes(r.kind)||typeof r.label!=='string'||r.label.length>200||relationKeys.has(key))throw new Error('關係線資料無效。');relationKeys.add(key);return{id:id(r.id),from:mapping.get(r.from)!,to:mapping.get(r.to)!,kind:r.kind,label:r.label};});
   const outline=p.outline||{groupIds:[],cardIds:p.cards.map(c=>c.id)};
   if(!Array.isArray(outline.groupIds)||!Array.isArray(outline.cardIds)||outline.groupIds.some(g=>!groupIds.has(g))||outline.cardIds.some(c=>!cardIds.has(c)))throw new Error('輸出大綱引用了不存在的材料。');
-  return {...newProject(remap?p.title.slice(0,190)+'（匯入）':p.title),...(remap?{}:{id:typeof p.id==='string'?p.id:crypto.randomUUID()}),cards,groups,tags,relations,outline:{groupIds:[...new Set(outline.groupIds)].map(g=>mapping.get(g)!),cardIds:[...new Set(outline.cardIds)].map(c=>mapping.get(c)!)},view:{...p.view},print:{...p.print,includeGraph:p.print.includeGraph??true}};
+  return {...newProject(remap?p.title.slice(0,190)+'（匯入）':p.title),...(remap?{}:{id:typeof p.id==='string'?p.id:crypto.randomUUID()}),cards,groups,tags,relations,...readingFields(p.readingProgress,new Map(p.cards.map(c=>[c.id,mapping.get(c.id)!]))),outline:{groupIds:[...new Set(outline.groupIds)].map(g=>mapping.get(g)!),cardIds:[...new Set(outline.cardIds)].map(c=>mapping.get(c)!)},view:{...p.view},print:{...p.print,includeGraph:p.print.includeGraph??true}};
 }
 export function importProject(raw: string): Project {
   if(raw.length>30_000_000)throw new Error('備份檔過大。');
   let doc;try{doc=JSON.parse(raw);}catch{throw new Error('無法解析 JSON 備份。');}
-  if(!doc||doc.format!=='canvas-clipper'||![1,2].includes(doc.version))throw new Error('這不是支援的 Canvas Clipper 備份版本。');
+  if(!doc||doc.format!=='canvas-clipper'||![1,2,3].includes(doc.version))throw new Error('這不是支援的 Canvas Clipper 備份版本。');
   return validateProject(doc.project);
 }
 export function addRelation(p:Project,from:string,to:string,kind:Relation['kind']='相關',id:string=crypto.randomUUID()):Project {
   if(from===to||!p.cards.some(c=>c.id===from)||!p.cards.some(c=>c.id===to)||p.relations.some(r=>r.from===from&&r.to===to&&r.kind===kind))return p;
   return {...p,relations:[...p.relations,{id,from,to,kind,label:''}]};
 }
-export function removeCard(p:Project,id:string):Project{return{...p,cards:p.cards.filter(c=>c.id!==id),relations:p.relations.filter(r=>r.from!==id&&r.to!==id),outline:{...p.outline,cardIds:p.outline.cardIds.filter(c=>c!==id)}};}
+export function removeCard(p:Project,id:string):Project{return{...p,readingProgress:p.readingProgress?.cardId===id?undefined:p.readingProgress,cards:p.cards.filter(c=>c.id!==id),relations:p.relations.filter(r=>r.from!==id&&r.to!==id),outline:{...p.outline,cardIds:p.outline.cardIds.filter(c=>c!==id)}};}
 export function orderedCards(p:Project):Clip[]{const order=new Map(p.outline.cardIds.map((id,i)=>[id,i]));return [...p.cards].sort((a,b)=>(order.get(a.id)??1e6)-(order.get(b.id)??1e6));}
 export function orderedGroups(p:Project):Group[]{const order=new Map(p.outline.groupIds.map((id,i)=>[id,i]));return [...p.groups].sort((a,b)=>(order.get(a.id)??1e6)-(order.get(b.id)??1e6));}
 export function sourceLabel(url: string): string { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return '手動筆記'; } }
 export function timeLabel(iso: string): string { return new Date(iso).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false }); }
+
+function visualFields(c:Clip):Pick<Clip,'width'|'height'|'frame'|'color'>{
+  if(c.width!==undefined&&!finite(c.width,260,640)||c.height!==undefined&&!finite(c.height,240,760)||c.frame!==undefined&&!isFrame(c.frame)||c.color!==undefined&&!isColor(c.color))throw new Error('文章尺寸、框型或顏色無效。');
+  return{width:c.width||308,height:c.height||374,...(c.frame?{frame:c.frame}:{}),...(c.color?{color:c.color}:{})};
+}
+function groupVisualFields(g:Group):Pick<Group,'frame'|'cardFrame'|'cardColor'>{
+  if(g.frame!==undefined&&!isFrame(g.frame)||g.cardFrame!==undefined&&!isFrame(g.cardFrame)||g.cardColor!==undefined&&!isColor(g.cardColor))throw new Error('主題樣式無效。');
+  return{...(g.frame?{frame:g.frame}:{}),...(g.cardFrame?{cardFrame:g.cardFrame}:{}),...(g.cardColor?{cardColor:g.cardColor}:{})};
+}
+function readingFields(value:Project['readingProgress'],mapping:Map<string,string>):Pick<Project,'readingProgress'>{
+  if(!value)return{};
+  if(!mapping.has(value.cardId)||!Array.isArray(value.nodePath)||value.nodePath.length>30||value.nodePath.some(n=>!Number.isInteger(n)||n<0)||!Number.isInteger(value.offset)||value.offset<0||value.offset>MAX_TEXT)throw new Error('閱讀位置無效。');
+  return{readingProgress:{...value,cardId:mapping.get(value.cardId)!,nodePath:[...value.nodePath]}};
+}

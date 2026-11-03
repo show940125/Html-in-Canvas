@@ -1,8 +1,9 @@
+from browser_support import chrome_launch_options
 """Isolated old/new extension migration, atomic restore failures and folder writer."""
 from pathlib import Path
-import json,traceback,uuid,zipfile,struct
+import json,traceback,uuid,zipfile,struct,shutil,os
 from playwright.sync_api import sync_playwright
-ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'output'/'v02'/'migration';OUT.mkdir(parents=True,exist_ok=True)
+ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'output'/'v03'/'migration';OUT.mkdir(parents=True,exist_ok=True)
 results=[]
 def check(name,passed,detail=None):
  results.append(dict(name=name,passed=bool(passed),detail=detail));print(('PASS ' if passed else 'FAIL ')+name,flush=True)
@@ -12,12 +13,17 @@ def rows(page):
 def wait_saved(page):page.locator('.save-state.saved').wait_for(timeout=15000)
 try:
  with sync_playwright() as p:
-  context=p.chromium.launch_persistent_context(str(OUT/('profile-'+uuid.uuid4().hex[:8])),executable_path=r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',headless=True,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging','--enable-features=CanvasDrawElement'],viewport={'width':1600,'height':1000})
+  context=p.chromium.launch_persistent_context(str(OUT/('profile-'+uuid.uuid4().hex[:8])),**chrome_launch_options(),headless=True,ignore_default_args=['--disable-extensions'],args=['--enable-unsafe-extension-debugging','--enable-features=CanvasDrawElement'],viewport={'width':1600,'height':1000})
   cdp=context.browser.new_browser_cdp_session()
   try:
-   legacy_id=cdp.send('Extensions.loadUnpacked',{'path':str(ROOT.parent/'dist')})['id']
+   legacy_dir=Path(os.environ['CLIPPER_LEGACY_DIR']) if os.environ.get('CLIPPER_LEGACY_DIR') else OUT/('legacy-fixture-'+uuid.uuid4().hex[:8])
+   if not legacy_dir.exists():
+    legacy_dir.mkdir();(legacy_dir/'manifest.json').write_text(json.dumps({'manifest_version':3,'name':'Legacy fixture','version':'0.1.0'}));(legacy_dir/'index.html').write_text('<html><title>Legacy fixture</title></html>')
+    for name in ['migration.html','migration.js','migration.css']:shutil.copyfile(ROOT/'public'/name,legacy_dir/name)
+   legacy_id=cdp.send('Extensions.loadUnpacked',{'path':str(legacy_dir)})['id']
    check('legacy installed path retains original identity',len(legacy_id)==32,legacy_id)
    old=context.new_page();old.goto(f'chrome-extension://{legacy_id}/index.html');old.wait_for_load_state('networkidle')
+   old.evaluate('''async()=>{const db=await new Promise((r,j)=>{const q=indexedDB.open('canvas-clipper',1);q.onupgradeneeded=()=>{q.result.createObjectStore('projects',{keyPath:'id'});q.result.createObjectStore('settings')};q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});db.close();}''')
    fixture=json.loads((ROOT/'tests'/'fixtures'/'acceptance-fixture.json').read_text(encoding='utf-8'))['project']
    other=json.loads(json.dumps(fixture));other['id']='second-legacy-project';other['title']='舊版第二個專案';other['cards']=other['cards'][:1];other['cards'][0]['id']='second-card';other['cards'][0]['note']='兩個專案都必須保留。'
    seeded=[fixture,other]
@@ -58,7 +64,7 @@ try:
    page.locator('input[accept^=".json"]').set_input_files(bad);page.get_by_role('alert').wait_for()
    check('invalid workspace restore writes no partial projects',len(rows(page))==count,page.get_by_role('alert').inner_text())
    page.get_by_role('button',name='關閉提示').click()
-   with zipfile.ZipFile(ROOT/'output'/'v02'/'v02-project.zip') as z:image_manifest=z.read('manifest.json')
+   image_manifest=json.loads(json.dumps(manifest));image_manifest['assets']=[dict(id='a'*64,mime='image/png',width=320,height=140,sourceUrl='',createdAt='2026-11-01T00:00:00Z')];image_manifest['projects'][1]['cards'][0]['editedDoc']['content'].append({'type':'image','attrs':{'assetId':'a'*64,'width':320,'status':'ready'}});image_manifest=json.dumps(image_manifest)
    with zipfile.ZipFile(bad,'w') as z:z.writestr('manifest.json',image_manifest)
    page.locator('input[accept^=".json"]').set_input_files(bad);page.get_by_role('alert').wait_for()
    check('missing-image backup fails without partial writes',len(rows(page))==count and '圖片' in page.get_by_role('alert').inner_text())

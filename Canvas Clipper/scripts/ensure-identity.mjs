@@ -2,7 +2,7 @@ import { readFile,writeFile } from 'node:fs/promises';
 import { generateKeyPairSync,createHash } from 'node:crypto';
 const manifest=JSON.parse(await readFile('public/manifest.json','utf8'));
 if(!manifest.key){const {publicKey}=generateKeyPairSync('rsa',{modulusLength:2048});manifest.key=publicKey.export({type:'spki',format:'der'}).toString('base64');}
-manifest.version='0.2.0';
+manifest.version=JSON.parse(await readFile('package.json','utf8')).version;
 manifest.description='圖文摘錄、聚焦閱讀、並排比較、主題框、標籤、關係線與本機完整備份。';
 manifest.optional_host_permissions=['https://*/*','http://*/*'];
 manifest.content_security_policy.extension_pages="script-src 'self'; object-src 'none'; base-uri 'none'; img-src 'self' blob:;";

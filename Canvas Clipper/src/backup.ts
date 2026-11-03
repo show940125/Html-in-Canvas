@@ -7,7 +7,7 @@ export async function makeBackup(projects:Project[]):Promise<Blob>{
   const ids=new Set(projects.flatMap(p=>p.cards.flatMap(c=>[...walkImages(c.originalDoc),...walkImages(c.editedDoc)].map(n=>String(n.attrs?.assetId||'')).filter(Boolean))));
   const assets:Asset[]=[];
   for(const id of ids){const asset=await getAsset(id);if(!asset)throw new Error('備份缺少圖片資源：'+id.slice(0,12));assets.push(asset);}
-  const manifest={format:'canvas-clipper-workspace',version:2,exportedAt:new Date().toISOString(),projects:projects.map(p=>({...p,title:p.title.trim()||'未命名專案'})),assets:assets.map(({blob,...info})=>info)};
+  const manifest={format:'canvas-clipper-workspace',version:3,exportedAt:new Date().toISOString(),projects:projects.map(p=>({...p,title:p.title.trim()||'未命名專案'})),assets:assets.map(({blob,...info})=>info)};
   const manifestBytes=strToU8(JSON.stringify(manifest));
   if(manifestBytes.length>30_000_000)throw new Error('專案文字總量超過單份備份限制，請分開備份。');
   const entries:Parameters<typeof zipSync>[0]={'manifest.json':[manifestBytes,{level:6}]};
@@ -29,10 +29,10 @@ export async function restoreBackup(file:Blob):Promise<Project[]>{
   const doc=raw as {format:string;version:number;projects?:unknown[];assets?:Omit<Asset,'blob'>[]};
   let projects:Project[];
   if(doc.format==='canvas-clipper')projects=[importProject(JSON.stringify(raw))];
-  else if(doc.format==='canvas-clipper-workspace'&&[1,2].includes(doc.version)&&Array.isArray(doc.projects)&&doc.projects.length<=1000)projects=doc.projects.map(p=>validateProject(p));
+  else if(doc.format==='canvas-clipper-workspace'&&[1,2,3].includes(doc.version)&&Array.isArray(doc.projects)&&doc.projects.length<=1000)projects=doc.projects.map(p=>validateProject(p));
   else throw new Error('這不是支援的備份版本。');
   const assets:Asset[]=[];
-  if(doc.version===2&&doc.format==='canvas-clipper-workspace'){
+  if(doc.version>=2&&doc.format==='canvas-clipper-workspace'){
     if(!Array.isArray(doc.assets))throw new Error('備份缺少圖片清單。');
     for(const info of doc.assets){if(!/^[a-f0-9]{64}$/.test(info.id)||!files['assets/'+info.id])throw new Error('備份遺失圖片。');const blob=new Blob([files['assets/'+info.id].slice().buffer],{type:info.mime});const a=await imageAsset(blob,info.sourceUrl);if(a.id!==info.id)throw new Error('圖片雜湊不符，備份可能損壞。');assets.push(a);}
   }

@@ -28,20 +28,25 @@ export function useWorkspace(){
   const[error,setError]=useState(new URLSearchParams(location.search).get('error')||''),[notice,setNotice]=useState('');
   const[saving,setSaving]=useState<'saved'|'saving'|'error'>('saved');
   const ref=useRef<Project|undefined>(undefined),pending=useRef<{id:string;edit:ProjectEdit}[]>([]);
-  const flight=useRef<Promise<boolean>|undefined>(undefined),refreshNeeded=useRef(false);
+  const flight=useRef<Promise<boolean>|undefined>(undefined),refreshNeeded=useRef(false),editEpoch=useRef(0);
   const history=useRef(new Map<string,{past:History[];future:History[]}>()),[historyTick,setHistoryTick]=useState(0);
   const refresh=useCallback(async()=>{setProjects(await listProjects());},[]);
   const adopt=useCallback((p:Project)=>{ref.current=p;setProject(p);setHistoryTick(n=>n+1);},[]);
-  const load=useCallback(async()=>{const requested=new URLSearchParams(location.hash.slice(1)).get('project');const p=requested&&await getProject(requested)||await currentProject();await setCurrent(p.id);adopt(p);await refresh();},[adopt,refresh]);
+  const load=useCallback(async()=>{
+    const requested=new URLSearchParams(location.hash.slice(1)).get('project');const candidate=requested&&await getProject(requested)||await currentProject();await setCurrent(candidate.id);
+    // Hash changes and incoming captures may race an optimistic local edit.
+    // Read again after setCurrent; never adopt a snapshot older than that edit.
+    for(;;){if(pending.current.length){refreshNeeded.current=true;await refresh();return;}const epoch=editEpoch.current;const fresh=await getProject(candidate.id);if(pending.current.length){refreshNeeded.current=true;await refresh();return;}if(epoch!==editEpoch.current)continue;adopt(fresh||candidate);await refresh();return;}
+  },[adopt,refresh]);
   useEffect(()=>{void load().catch(e=>setError(String(e)));const changed=()=>{if(pending.current.length){refreshNeeded.current=true;return;}void load().catch(e=>setError(String(e)));};const unsubscribe=watchProjects(changed);window.addEventListener('hashchange',changed);const before=(e:BeforeUnloadEvent)=>{if(pending.current.length)e.preventDefault();};window.addEventListener('beforeunload',before);return()=>{unsubscribe();window.removeEventListener('hashchange',changed);window.removeEventListener('beforeunload',before);};},[load]);
   const flush=useCallback(()=>{
     if(flight.current)return flight.current;
-    const task=(async()=>{try{for(;;){while(pending.current.length){setSaving('saving');const op=pending.current[0];const saved=await updateProject(op.id,op.edit);pending.current.shift();if(!pending.current.some(item=>item.id===op.id)&&ref.current?.id===op.id)adopt(saved);}if(refreshNeeded.current){refreshNeeded.current=false;await load();}await refresh();if(!pending.current.length)break;}setSaving('saved');return true;}catch(e){setSaving('error');setError('尚未儲存。編輯仍留在畫面上，可重試或先下載備份。'+String(e));return false;}finally{flight.current=undefined;}})();
+    const task=(async()=>{try{for(;;){while(pending.current.length){setSaving('saving');const op=pending.current[0];const saved=await updateProject(op.id,op.edit);pending.current.shift();if(!pending.current.some(item=>item.id===op.id)&&ref.current?.id===op.id)adopt(saved);}if(refreshNeeded.current){refreshNeeded.current=false;await load();}await refresh();if(!pending.current.length&&!refreshNeeded.current)break;}setSaving('saved');return true;}catch(e){setSaving('error');setError('尚未儲存。編輯仍留在畫面上，可重試或先下載備份。'+String(e));return false;}finally{flight.current=undefined;}})();
     flight.current=task;return task;
   },[adopt,load,refresh]);
   const commit=useCallback((edit:ProjectEdit,record=false)=>{
     const before=ref.current;if(!before)return;
-    const next=edit(before);if(next===before)return;
+    const next=edit(before);if(next===before)return;editEpoch.current++;
     if(record){let stack=history.current.get(before.id);if(!stack){stack={past:[],future:[]};history.current.set(before.id,stack);}stack.past.push(difference(before,next));if(stack.past.length>20)stack.past.shift();stack.future=[];setHistoryTick(n=>n+1);}
     adopt(next);pending.current.push({id:before.id,edit});setSaving('saving');void flush();
   },[adopt,flush]);
