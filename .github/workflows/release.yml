@@ -1,0 +1,31 @@
+name: package release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag (for example canvas-clipper-v0.3.0)
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: npm --prefix "Canvas Clipper" ci
+      - run: npm --prefix "Canvas Clipper" test
+      - run: npm --prefix "Canvas Clipper" run build
+      - run: python "Canvas Clipper/scripts/package_release.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: Canvas Clipper/release/*

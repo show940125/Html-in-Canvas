@@ -1,4 +1,4 @@
-from browser_support import chrome_launch_options
+from browser_support import chrome_launch_options,software_args
 """20 materials / six rasters / 20 edges; native drag latency and 150% DPI."""
 from pathlib import Path
 from functools import partial
@@ -6,7 +6,7 @@ from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
 from threading import Thread
 import json,zipfile,hashlib,struct,zlib,traceback,statistics
 from playwright.sync_api import sync_playwright
-ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'output'/'v02';results=[]
+ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'output'/'v03'/'workload';OUT.mkdir(parents=True,exist_ok=True);results=[]
 class Quiet(SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
 def check(name,passed,detail=None):
@@ -29,16 +29,17 @@ with zipfile.ZipFile(target,'w') as z:
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'dist')));Thread(target=server.serve_forever,daemon=True).start()
 try:
  with sync_playwright() as p:
-  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement'])
+  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement']+software_args())
   try:
    context=browser.new_context(viewport={'width':1920,'height':2000});page=context.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.locator('input[accept^=".json"]').set_input_files(target);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');page.locator('.save-state.saved').wait_for();page.wait_for_timeout(400)
    check('full workload loads in native Canvas',page.locator('.board-surface').get_attribute('data-mode')=='native' and page.locator('.relation').count()==20 and page.locator('.card-thumbnail').count()==6)
    dims=page.locator('.clip-card').evaluate_all('(cards)=>cards.map(c=>{const r=c.getBoundingClientRect();return {x:r.x,y:r.y,bottom:r.bottom,right:r.right}})')
    check('all twenty materials are inside viewport',all(0<=r['x'] and r['right']<=1920 and 0<=r['y'] and r['bottom']<=2000 for r in dims),dims[-1])
-   page.evaluate('''()=>{window.dragSamples=[];let moved=0;document.querySelector('.board-surface').addEventListener('pointermove',()=>{moved=performance.now()},{capture:true});document.querySelector('.native-canvas').addEventListener('paint',()=>{if(moved){window.dragSamples.push(performance.now()-moved);moved=0;}});}''')
+   page.evaluate('''()=>{window.dragSamples=[];window.paintTimes=[];let moved=0;document.querySelector('.board-surface').addEventListener('pointermove',()=>{moved=performance.now()},{capture:true});document.querySelector('.native-canvas').addEventListener('paint',()=>{if(moved){window.dragSamples.push(performance.now()-moved);window.paintTimes.push(performance.now());moved=0;}});}''')
    r=page.locator('.card-handle').first.bounding_box();page.mouse.move(r['x']+35,r['y']+10);page.mouse.down()
    for i in range(40):page.mouse.move(r['x']+35+i*2,r['y']+10+i)
    page.mouse.up();page.locator('.save-state.saved').wait_for();samples=page.evaluate('window.dragSamples');ordered=sorted(samples);stats={'samples':len(samples),'medianMs':round(statistics.median(samples),2),'p95Ms':round(ordered[int((len(ordered)-1)*.95)],2),'maxMs':round(max(samples),2),'measurement':'pointermove handler to Canvas paint event; excludes compositor presentation'}
+   times=page.evaluate('window.paintTimes');stats['effectivePaintFps']=round((len(times)-1)*1000/(times[-1]-times[0]),2)
    check('native drag event-to-paint p95 under 100ms',len(samples)>=20 and stats['p95Ms']<100,stats)
    page.screenshot(path=str(OUT/'workload-native.png'));context.close()
    context=browser.new_context(viewport={'width':1680,'height':1100},device_scale_factor=1.5,reduced_motion='reduce');page=context.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.locator('input[accept^=".json"]').set_input_files(target);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');page.locator('.save-state.saved').wait_for()
@@ -46,9 +47,8 @@ try:
    check('150-percent DPI native backing size is correct',abs(size['width']/size['css']-1.5)<.01,size)
    note=page.get_by_role('textbox',name='卡片筆記 1',exact=True);r=note.bounding_box();page.mouse.click(r['x']+r['width']/2,r['y']+r['height']/2);page.keyboard.press('Control+A');page.keyboard.insert_text('150% 原生命中與中文輸入');page.locator('.save-state.saved').wait_for()
    check('150-percent DPI geometry maps native note input',note.input_value()=='150% 原生命中與中文輸入')
-   page.get_by_role('tab',name='◇ 特效展示').click();page.wait_for_function('()=>Number(document.querySelector(".webgl-canvas")?.dataset.frames)>0 || !!document.querySelector(".showcase-unavailable")');button=page.locator('.gpu-test-button');r=button.bounding_box();page.mouse.click(r['x']+r['width']/2,r['y']+r['height']/2)
-   page.wait_for_function('()=>document.querySelector(".gpu-test-button").textContent.includes("1 次")')
-   check('150-percent DPI GPU button follows perspective','1 次' in button.inner_text())
+   page.get_by_role('button',name='書本閱讀',exact=False).first.click();page.wait_for_function('()=>!document.querySelector(".book-loading")',timeout=60000);page.wait_for_function('()=>!!document.querySelector(".book-canvas[data-renderer]")')
+   check('150-percent DPI GPU book renders live HTML',page.locator('.book-canvas').evaluate('(c)=>Math.abs(c.width/c.clientWidth-1.5)<.01'))
    page.screenshot(path=str(OUT/'gpu-150-percent.png'));context.close()
   finally:browser.close()
 except Exception:results.append(dict(name='unexpected failure',passed=False,detail=traceback.format_exc()));raise

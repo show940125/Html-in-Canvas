@@ -54,8 +54,8 @@ export function computeDropPreview(project:Project,intent:DragIntent):DropPrevie
     }
   }
   const changed=[...cards.values()].filter(r=>{const c=project.cards.find(c=>c.id===r.id)!;return c.x!==r.x||c.y!==r.y;});
-  return{targetGroupId:target?.id,cardRects:[...cards.values()],groupRects:groups.map(g=>({...g,height:g.collapsed?48:g.height})),displacedNodes:changed.filter(c=>!moving.has(c.id)).map(c=>c.id),insertionHint:hint,assignments};
+  return{targetGroupId:target?.id,cardRects:[...cards.values()],groupRects:groups.map(g=>({...g})),displacedNodes:changed.filter(c=>!moving.has(c.id)).map(c=>c.id),insertionHint:hint,assignments};
 }
 export function applyDrop(project:Project,preview:DropPreview):Project{
-  return{...project,cards:project.cards.map(c=>{const r=preview.cardRects.find(r=>r.id===c.id),a=preview.assignments.find(a=>a.id===c.id);return{...c,...(r?{x:r.x,y:r.y,width:r.width,height:r.height}:{}),...(a?{groupId:a.groupId}:{})};}),groups:project.groups.map(g=>{const r=preview.groupRects.find(r=>r.id===g.id);return r?{...g,x:r.x,y:r.y,width:r.width,height:r.collapsed?g.height:r.height,collapsed:r.collapsed}:g;})};
+  return{...project,cards:project.cards.map(c=>{const r=preview.cardRects.find(r=>r.id===c.id),a=preview.assignments.find(a=>a.id===c.id);return{...c,...(r?{x:r.x,y:r.y,width:r.width,height:r.height}:{}),...(a?{groupId:a.groupId}:{})};}),groups:project.groups.map(g=>{const r=preview.groupRects.find(r=>r.id===g.id);return r?{...g,x:r.x,y:r.y,width:r.width,height:r.height,collapsed:r.collapsed}:g;})};
 }

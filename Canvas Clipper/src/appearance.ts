@@ -6,6 +6,9 @@ export interface Appearance{palette:string;scheme:'light'|'dark'|'system';accent
 export const DEFAULT_APPEARANCE:Appearance={palette:'forest',scheme:'light',accent:'',motion:true,diagnostics:false};
 export function isColor(value:unknown):value is string{return typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);}
 export function isFrame(value:unknown):value is FrameId{return FRAME_IDS.includes(value as FrameId);}
+export function luminance(hex:string){const values=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return values[0]*.2126+values[1]*.7152+values[2]*.0722;}
+export function contrastingText(color:string){if(!isColor(color))return'#263f33';const l=luminance(color);return l<=.179?'#ffffff':l<.39?'#000000':'#263f33';}
+export function readableAccent(color:string,dark:boolean){const bg=dark?'#202723':'#f9faf5',target=dark?'#ffffff':'#163622',channels=(v:string)=>[1,3,5].map(i=>parseInt(v.slice(i,i+2),16));for(let step=0;step<=20;step++){const a=channels(color),b=channels(target),hex='#'+a.map((v,i)=>Math.round(v+(b[i]-v)*step/20).toString(16).padStart(2,'0')).join(''),x=luminance(hex),y=luminance(bg);if((Math.max(x,y)+.05)/(Math.min(x,y)+.05)>=4.5)return hex;}return target;}
 export function framePath(frame:FrameId,w:number,h:number){const r=12,c=24;switch(frame){
 case'cut':return`M${c} 1H${w-1}V${h-c}L${w-c} ${h-1}H1V${c}Z`;
 case'note':return`M1 1H${w-c}L${w-1} ${c}V${h-1}H1Z M${w-c} 1V${c}H${w-1}`;

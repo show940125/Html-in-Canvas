@@ -1,8 +1,9 @@
 import {describe,it,expect} from 'vitest';
 import {newProject,createClip,exportProject,importProject,removeCard} from '../src/model';
-import {FRAME_IDS,framePath,cardAppearance} from '../src/appearance';
+import {FRAME_IDS,framePath,cardAppearance,contrastingText,readableAccent,luminance} from '../src/appearance';
 const fixture=()=>{const p=newProject();p.cards=[createClip({kind:'manual',title:'可變尺寸',text:'繁體中文 🧑‍💻',url:'',capturedAt:new Date().toISOString()},0)];return p;};
 describe('v3 persistence and frame contracts',()=>{
+ it('keeps custom color foregrounds readable',()=>{const ratio=(a:string,b:string)=>(Math.max(luminance(a),luminance(b))+.05)/(Math.min(luminance(a),luminance(b))+.05);for(const color of ['#000000','#ffffff','#777777','#aaaaaa','#ff00ff','#00ff00']){expect(ratio(color,contrastingText(color))).toBeGreaterThanOrEqual(4.5);expect(ratio(readableAccent(color,false),'#f9faf5')).toBeGreaterThanOrEqual(4.5);expect(ratio(readableAccent(color,true),'#202723')).toBeGreaterThanOrEqual(4.5);}});
  it('roundtrips dimensions, frames, colors and a remapped reading anchor',()=>{const p=fixture();Object.assign(p.cards[0],{width:420,height:520,frame:'hexagon',color:'#d9e8ed'});p.readingProgress={cardId:p.cards[0].id,nodePath:[4,1],offset:24};const result=importProject(exportProject(p));expect(result.cards[0]).toMatchObject({width:420,height:520,frame:'hexagon',color:'#d9e8ed'});expect(result.readingProgress).toEqual({...p.readingProgress,cardId:result.cards[0].id});});
  it('rejects invalid dimensions and unknown frame assets',()=>{const p=fixture();p.cards[0].width=20;expect(()=>importProject(exportProject(p))).toThrow(/尺寸/);p.cards[0].width=308;p.cards[0].frame='untrusted-svg' as never;expect(()=>importProject(exportProject(p))).toThrow(/框型/);});
  it('rejects dangling reading anchors and clears the anchor on deletion',()=>{const p=fixture();p.readingProgress={cardId:'missing',nodePath:[0],offset:0};expect(()=>importProject(exportProject(p))).toThrow(/閱讀/);p.readingProgress.cardId=p.cards[0].id;expect(removeCard(p,p.cards[0].id).readingProgress).toBeUndefined();});

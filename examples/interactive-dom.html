@@ -1,0 +1,16 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>互動 DOM — Html in Canvas</title><link rel="stylesheet" href="examples.css"><style>#scene{width:100%;height:490px}.sheet{width:440px;padding:26px;background:#fffef7;border:1px solid #b8c9a7;border-radius:10px;transform-origin:0 0}.sheet label{display:block;margin:14px 0;font-size:13px}.sheet input{width:100%}.sheet p{font-size:14px}.sheet button{background:#315d43;color:white}</style><a href="index.html">← 範例目錄</a><p class="eyebrow">01 / LIVE DOM · NATIVE INPUT</p><h1>畫布裡的表單，仍然是表單。</h1><p>試著選取文字、輸入中文、Tab 切換欄位，或點擊按鈕。</p><canvas id="scene" content="drawable"><form id="sheet" class="sheet" drawable><h2>你的下一個想法</h2><p>這段繁體中文可以原生選取與複製。它由瀏覽器排版，再畫進 Canvas。</p><label>題目<input aria-label="題目" value="把材料連起來"></label><label>筆記<textarea aria-label="筆記" placeholder="輸入中文或使用輸入法…"></textarea></label><button>留下想法 · <span id="count">0</span></button></form></canvas><output id="status" class="status"></output><div class="notice">程式在 paint 事件中呼叫 drawElementImage。CSS 尺寸與 DPI 分開處理；共用相容層對齊原生互動幾何。</div><script type="module">
+import{prepareCanvas,supportsCanvas,syncGeometry}from'./runtime.js';
+const canvas=document.querySelector('#scene'),sheet=document.querySelector('#sheet'),status=document.querySelector('#status');
+if(!supportsCanvas()){status.textContent='HTML-in-Canvas 不可用，請在支援的 Chrome 啟用功能。';}else{
+ prepareCanvas(canvas);const ctx=canvas.getContext('2d');let paints=0;
+ canvas.addEventListener('paint',()=>{
+  ctx.reset();ctx.scale(devicePixelRatio,devicePixelRatio);
+  // Explicit CSS width/height prevents 156's default image size doubling DPI.
+  const transform=ctx.drawElementImage(sheet,24,24,sheet.offsetWidth,sheet.offsetHeight);
+  syncGeometry(canvas,sheet,transform);
+  status.textContent=`原生 2D · DPI ${devicePixelRatio} · paint ${++paints}`;
+ });
+ new ResizeObserver(()=>{sheet.style.width=Math.min(440,canvas.clientWidth-48)+'px';canvas.width=Math.round(canvas.clientWidth*devicePixelRatio);canvas.height=Math.round(canvas.clientHeight*devicePixelRatio);canvas.requestPaint();}).observe(canvas);
+ sheet.addEventListener('input',()=>canvas.requestPaint());sheet.addEventListener('submit',e=>{e.preventDefault();document.querySelector('#count').textContent=Number(document.querySelector('#count').textContent)+1;canvas.requestPaint();});canvas.requestPaint();
+}
+</script></html>

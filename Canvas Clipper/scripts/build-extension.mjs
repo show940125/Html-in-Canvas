@@ -4,7 +4,11 @@ import { deflateSync } from 'node:zlib';
 await build({ entryPoints: ['src/background.ts'], outfile: 'dist/background.js', bundle: true, format: 'esm', target: 'chrome156' });
 await build({ entryPoints: ['src/extract.ts'], outfile: 'dist/extract.js', bundle: true, format: 'iife', target: 'chrome156' });
 await build({ entryPoints: ['src/selection.ts'], outfile: 'dist/selection.js', bundle: true, format: 'iife', target: 'chrome156' });
+await build({ entryPoints: ['../examples/runtime.ts'], outfile: '../examples/runtime.js', bundle: true, format: 'esm', target: 'chrome156' });
 await copyFile('GUIDE.html', 'dist/start.html');
+await copyFile('../LICENSE', 'dist/LICENSE');
+await copyFile('../NOTICE', 'dist/NOTICE');
+await copyFile('../THIRD_PARTY_NOTICES.md', 'dist/THIRD_PARTY_NOTICES.md');
 await mkdir('dist/licenses', { recursive:true });
 // Include every installed runtime dependency, including editor transitive packages.
 const seen = new Set();

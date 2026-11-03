@@ -1,29 +1,29 @@
-# Canvas Clipper v0.3 implementation
+# Canvas Clipper v0.3 release frontier
 
-Approved: public show940125/Html-in-Canvas, Apache-2.0. Preserve local installed dist and extension key. v0.2 baseline has an unfinished native optional-origin permission test; it is not a completed release.
+Approved: public show940125/Html-in-Canvas, Apache-2.0. Preserve installed legacy dist and fixed extension key. Public repo exists; baseline CI passed.
 
-- [x] Public reproducible baseline, sanitized docs, synthetic fixtures, CI, repo creation.
-- [x] v3 styles/sizes/progress model, v1/v2 backup and database compatibility.
-- [x] Pure magnetic preview engine, local collision push, atomic undo.
-- [x] Native board preview, resizing, focus/trace, diagnostics.
-- [x] Collapsible panels, six palettes, light/dark/system and custom accent.
-- [x] Composite PNG/JPEG export with links and shapes.
-- [x] Rich document pagination, saved anchors, live HTML WebGL book turns.
-- [ ] Standalone documented examples, usage guide, feature video.
-- [ ] Native/DOM/150% DPI, migration, export, pagination, performance checks.
-- [x] Real origin permission download/offline/SVG rejection; preserve manual consent boundary.
-- [ ] Clean clone build, package, release, evidence and user preview.
+- [x] Public reproducible baseline, Apache license, synthetic fixtures.
+- [x] v3 style/size/progress model and v1/v2 import.
+- [x] Magnetic preview, directional insertion, local neighbors, atomic undo.
+- [x] Native shapes, resize, focus/trace and diagnostics.
+- [x] Collapsible panels, palettes, dark/system, contrast and viewport anchoring.
+- [x] Composite PNG/JPEG, full relationships and decoded images.
+- [x] Measured rich pagination, saved anchors, native HTML GPU book turns.
+- [x] Standalone examples, docs, guide and synthetic-data feature film.
+- [x] 44 unit tests; native/DOM/150% suite; full text equality; JPEG/ZIP/PDF.
+- [ ] Finish final serial release gate (terminal session 24864).
+- [ ] Clean clone build/test; public v0.3 CI; package/release/evidence; visible preview.
 
-## Decisions
+## Current checks
 
-Magnetic layout preserves spatial intent; neighboring groups locally yield. Group styles are inherited by cards with optional overrides. Long articles paginate as a book. Preview is transient; dropping commits one reversible action. Keep document outline independent of spatial arrangement. Readable HTML/CSS PDF is separate from raster output. Shared layer owns browser APIs only.
+Final gate has passed unit/build, basic integration, deep integration, examples, migration and real MV3 capture (three controlled sites plus Chrome Developers/MDN/React). It currently waits at a fresh native image-origin permission prompt. The earlier independent headed image test passed all five checks (grant/download/blob/offline/SVG rejection). An async user question asks them to allow 127.0.0.1 in the isolated test profile. Do not stop or duplicate the live gate; wait existing session. Workload will run after image consent.
 
-Next: strengthen native/DOM pagination and drag acceptance, fix theme contrast and viewport anchoring, then examples/docs/permission closure/clean-clone/release.
+## Verified fixes
 
-Current evidence: `Canvas Clipper/output/v03/acceptance.json` passes the first integrated flow (17 checks); 37 unit tests passed before UI integration. Native GL initially failed shader precision linkage and was corrected; latest flow renders HTML textures and advances pages. Source changes are not yet pushed as v0.3.
+Guard async workspace reload by edit epoch and pending saves. Set imported view in layout effect before ResizeObserver to retain zoom. Frame resize handle must override relative child positioning. Keep target/rel in sanitized book links. Keep latest entity content when undo/redo removes a created/deleted card so later notes survive. Collapsed groups retain the newly fitted expanded height. All latest app changes are built; last bundle is app-oL0TkmO7.js.
 
-Checkpoint: 42 unit tests and type/build pass. `output/v03/images/image-acceptance.json`: all five real headed extension checks pass (grant/download/raster storage/offline reload/SVG rejection). Deep 150% acceptance has passed native shapes/input/resize, cancellation, local neighbor yielding, collapsed hover, pagination character equality and GPU text selection. Its first link test exposed DOMPurify removing target=_blank; ADD_ATTR target/rel now fixed. Current terminal session 47158 is the rerun; wait it before launching duplicates.
+## Remaining
 
-Important fix: useWorkspace async load now re-reads after setCurrent and guards editEpoch/pending edits; stale hash loads previously overwrote the current view after import. CSS resize button specificity also fixed (full-width relative button was causing negative drags).
+Commit final candidate locally, clean clone under ignored local/, run npm ci/test/build and compare hashes. Push candidate and wait GitHub browser/build jobs. On success write public acceptance summary, package dist with SHA256, publish canvas-clipper-v0.3.0, open the guide and live preview. Regenerated feature video is in docs/media; raw recordings and detailed logs remain ignored.
 
-Next: finish deep suite, examples/docs/film, portable workload + migration + extension acceptance, CI browser job, clean clone, release. Source currently local v0.3; remote still baseline.
+Next: clean clone while image gate awaits the native human step.

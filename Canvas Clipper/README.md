@@ -1,7 +1,9 @@
-# Canvas Clipper
+# Canvas Clipper 0.3
 
-本機 HTML-in-Canvas 互動式閱讀桌。請參閱 repo 首頁及 [使用指南](GUIDE.html)。
+本機 HTML-in-Canvas 互動式閱讀桌。請參閱 [使用指南](GUIDE.html)、[技術架構](../docs/architecture.md) 與 [開發說明](../docs/development.md)。
 
-v0.2 為開發基線；v0.3 開發中，原生圖片來源授權驗收仍待完成。
+網頁圖文收集、主題框與多標籤、磁吸預覽和局部讓位、定向關係、聚焦與雙篇比較、長文分頁及原生 HTML WebGL 翻頁。
 
-資料保存在瀏覽器 IndexedDB。備份 ZIP 含原文、編輯稿、筆記、圖片及關係。
+三區可收合，提供六組配色與六種框型。圖片組圖保存卡片和關係，PDF 保留可搜尋全文。ZIP v3 包含原文、編輯稿、筆記、原始圖片、分類、關係、外觀及閱讀位置，並繼續支援 v1／v2 匯入。
+
+資料保存在目前瀏覽器設定檔的 IndexedDB。先備份再更新；載入建置後的 `dist` 目錄。首次試用可建立獨立合成範例專案。

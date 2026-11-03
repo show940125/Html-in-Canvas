@@ -12,7 +12,7 @@ import json, traceback, uuid, time
 from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'output'/'v02'/'extension'
+OUT=ROOT/'output'/'v03'/'extension'
 OUT.mkdir(parents=True,exist_ok=True)
 results=[]
 class Handler(SimpleHTTPRequestHandler):

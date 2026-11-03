@@ -1,4 +1,4 @@
-from browser_support import chrome_launch_options,synthetic_png
+from browser_support import chrome_launch_options,synthetic_png,software_args
 from pathlib import Path
 from functools import partial
 from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
@@ -16,7 +16,7 @@ def check(name,passed,detail=None):
  checks.append(dict(name=name,passed=bool(passed),detail=detail));print(('PASS ' if passed else 'FAIL ')+name,flush=True)
  if not passed:raise AssertionError(str(detail))
 def saved(page):
- page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');page.locator('.save-state.saved').wait_for(timeout=15000)
+ page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');page.locator('.save-state.saved').wait_for(state='attached',timeout=15000)
 def rows(page):return page.evaluate('''async()=>{const db=await new Promise(r=>{const q=indexedDB.open('canvas-clipper');q.onsuccess=()=>r(q.result)});const rows=await new Promise(r=>{const q=db.transaction('projects').objectStore('projects').getAll();q.onsuccess=()=>r(q.result)});db.close();return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}''')
 def current(page):return rows(page)[0]
 def native_click(page,loc):
@@ -26,7 +26,7 @@ def center(page):return page.locator('.board-surface').evaluate('e=>{const c=doc
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'dist')));Thread(target=server.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{server.server_port}'
 try:
  with sync_playwright() as p:
-  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement'])
+  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement']+software_args())
   context=browser.new_context(viewport={'width':1680,'height':1100},device_scale_factor=1.5,reduced_motion='reduce');page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   try:
    page.goto(base+'/index.html');page.wait_for_load_state('networkidle')
@@ -72,6 +72,21 @@ try:
    page.get_by_label('HTML 模式',exact=True).check();check('DOM fallback preserves variable shapes and topic membership',page.locator('.board-surface').get_attribute('data-mode')=='dom' and 'frame-hexagon' in page.locator('.clip-card').first.get_attribute('class'))
    page.get_by_role('button',name='書本閱讀',exact=False).first.click();wait_book(page);book=page.get_by_role('dialog',name='書本閱讀');check('book has a working flat HTML fallback',book.locator('.book-flat-spread').count()==1);book.get_by_role('button',name='關閉書本閱讀',exact=True).click()
    page.get_by_role('tab',name='▤ 文件檢視',exact=True).click();page.locator('.document-viewport img').first.evaluate('img=>img.decode()');pdf_path=OUT/'illustrated.pdf';page.pdf(path=str(pdf_path),prefer_css_page_size=True,print_background=True);pdf=pymupdf.open(pdf_path);text=''.join(p.get_text() for p in pdf);check('PDF preserves Chinese text and image after v3 styles','主要題目' in text and '程式碼內容' in text and sum(len(p.get_images()) for p in pdf)>0);pdf.close()
+   page.get_by_role('tab',name='▦ 閱讀桌',exact=True).click()
+   page.get_by_role('button',name='輸出主題圖片 主要題目',exact=True).click();export=page.get_by_role('dialog',name='圖文圖片輸出');export.get_by_label('圖片格式').select_option('image/jpeg');export.get_by_label('圖片倍率').select_option('2');export.locator('canvas[data-ready=true]').wait_for()
+   with page.expect_download() as download:export.get_by_role('button',name='下載圖片',exact=True).click()
+   image_path=OUT/'illustrated-group.jpg';download.value.save_as(image_path);pix=pymupdf.Pixmap(image_path);check('2x JPEG composite preserves the image and frame',pix.width==int(export.locator('canvas').get_attribute('width')) and pix.height==int(export.locator('canvas').get_attribute('height')) and image_path.stat().st_size>10000);export.get_by_role('button',name='關閉圖片輸出',exact=True).click()
+   page.get_by_role('button',name='備份 / 匯入',exact=True).click()
+   with page.expect_download() as download:page.get_by_role('button',name='下載目前專案 ZIP',exact=True).click()
+   backup=OUT/'v3-roundtrip.zip';download.value.save_as(backup)
+   with zipfile.ZipFile(backup) as z:backup_manifest=json.loads(z.read('manifest.json'))
+   check('v3 backup includes frames and reading progress',backup_manifest['version']==3 and backup_manifest['projects'][0]['cards'][0]['frame']=='hexagon' and bool(backup_manifest['projects'][0]['readingProgress']))
+   page.get_by_role('button',name='關閉對話框',exact=True).click();page.locator('input[accept^=".json"]').set_input_files(backup);page.wait_for_function('()=>document.querySelectorAll(".project-list button").length===3');saved(page);restored=current(page)
+   check('v3 restore remaps saved reading references',restored['readingProgress']['cardId'] in [c['id'] for c in restored['cards']] and restored['cards'][0]['frame']=='hexagon' and page.locator('.card-thumbnail').count()==1)
+   page.set_viewport_size({'width':600,'height':900});page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');check('narrow transition closes simultaneous drawers',page.locator('.app-v3').get_attribute('data-left')=='closed' and page.locator('.app-v3').get_attribute('data-right')=='closed')
+   page.get_by_role('button',name='展開左側欄',exact=True).first.click();page.get_by_role('button',name='展開右側欄',exact=True).first.click();check('narrow drawers open one side at a time',page.locator('.app-v3').get_attribute('data-left')=='closed' and page.locator('.app-v3').get_attribute('data-right')=='open')
+   fallback=browser.new_context(viewport={'width':1000,'height':850});fallback_page=fallback.new_page();fallback_page.add_init_script("Object.defineProperty(CanvasRenderingContext2D.prototype,'drawElementImage',{value:undefined})");fallback_page.goto(base+'/index.html');fallback_page.wait_for_load_state('networkidle');fallback_page.locator('input[accept^=".json"]').set_input_files(fixture);fallback_page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===3');saved(fallback_page)
+   check('API absence automatically selects HTML mode',fallback_page.locator('.board-surface').get_attribute('data-mode')=='dom');fallback_page.get_by_role('button',name='書本閱讀',exact=False).first.click();wait_book(fallback_page);check('API absence retains paginated reading',fallback_page.locator('.book-flat-spread').count()==1 and 'HTML 平面' in fallback_page.locator('.book-renderer').inner_text());fallback.close()
    check('no unhandled deep-flow browser errors',not errors,errors)
   except Exception:
    page.screenshot(path=str(OUT/'failure.png'),full_page=True);(OUT/'failure.html').write_text(page.content(),encoding='utf-8');print('ERRORS',errors,flush=True);print('ALERTS',page.locator('[role=alert]').all_text_contents(),flush=True);raise

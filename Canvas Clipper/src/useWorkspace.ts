@@ -51,7 +51,7 @@ export function useWorkspace(){
     adopt(next);pending.current.push({id:before.id,edit});setSaving('saving');void flush();
   },[adopt,flush]);
   const switchProject=useCallback(async(id:string)=>{if(!await flush())throw new Error('請先完成儲存。');const p=await getProject(id);if(!p)throw new Error('找不到專案。');await setCurrent(id);adopt(p);location.hash='project='+id;},[flush,adopt]);
-  function navigateHistory(undo:boolean){const p=ref.current;if(!p)return;const stack=history.current.get(p.id);if(!stack)return;const h=(undo?stack.past:stack.future).pop();if(!h)return;(undo?stack.future:stack.past).push(h);commit(value=>applyHistory(value,h,undo));setHistoryTick(n=>n+1);}
+  function navigateHistory(undo:boolean){const p=ref.current;if(!p)return;const stack=history.current.get(p.id);if(!stack)return;const h=(undo?stack.past:stack.future).pop();if(!h)return;for(const delta of h.deltas){const removing=undo?!delta.before:!delta.after;if(removing){const latest=(p[delta.field] as unknown as Row[]).find(row=>row.id===delta.id);if(latest){if(undo)delta.after=latest;else delta.before=latest;}}}(undo?stack.future:stack.past).push(h);commit(value=>applyHistory(value,h,undo));setHistoryTick(n=>n+1);}
   const stack=project?history.current.get(project.id):undefined;void historyTick;
   return{project,projects,error,setError,notice,setNotice,saving,commit,flush,refresh,switchProject,undo:()=>navigateHistory(true),redo:()=>navigateHistory(false),canUndo:!!stack?.past.length,canRedo:!!stack?.future.length};
 }

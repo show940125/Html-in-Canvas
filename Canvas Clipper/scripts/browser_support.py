@@ -11,3 +11,6 @@ def synthetic_png(seed=0,width=320,height=140):
  def chunk(kind,data):return struct.pack('!I',len(data))+kind+data+struct.pack('!I',zlib.crc32(kind+data)&0xffffffff)
  raw=b''.join(b'\0'+bytes((40+seed*20,90+y//4,80+seed*10,255))*width for y in range(height))
  return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('!2I5B',width,height,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b'')
+
+def software_args():
+ return ['--enable-unsafe-swiftshader','--use-angle=swiftshader'] if os.environ.get('CI') else []

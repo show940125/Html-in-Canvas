@@ -15,7 +15,7 @@ export async function paginate(sources:PageSource[],host:HTMLElement,width:numbe
  let segments:PageSegment[]=[],current:PageSource|undefined,partIndex=0;
  const flush=()=>{if(!box.childNodes.length||!current)return;const html=DOMPurify.sanitize(box.innerHTML,{ADD_ATTR:['target','rel','data-node-index','data-text-start','data-text-end'],ALLOWED_URI_REGEXP:/^(?:(?:https?|blob):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i});pages.push({cardId:current.cardId,title:current.title,html,text:box.textContent||'',segments});box.replaceChildren();segments=[];};
  const append=(node:HTMLElement,nodeIndex:number,start:number,end:number)=>{node.dataset.nodeIndex=String(nodeIndex);node.dataset.textStart=String(start);node.dataset.textEnd=String(end);box.append(node);segments.push({nodePath:[nodeIndex,partIndex],start,end});};
- try{for(const source of sources){if(signal.aborted)throw new DOMException('Pagination cancelled','AbortError');flush();current=source;
+ try{for(const source of sources){if(signal.aborted)throw new DOMException('Pagination cancelled','AbortError');flush();current=source;partIndex=0;
   for(const[index,raw]of Array.from(source.element.children).entries()){
    const original=raw.cloneNode(true) as HTMLElement;
    for(const img of original.querySelectorAll('img')){img.style.maxHeight=Math.max(80,height-70)+'px';img.style.width='auto';img.style.maxWidth='100%';}
@@ -35,7 +35,7 @@ export async function paginate(sources:PageSource[],host:HTMLElement,width:numbe
       if(pages.length%8===0)await new Promise<void>(resolve=>setTimeout(resolve,0));
     }blockOffset+=length;
    }
-  }flush();}
+  }if(!source.element.children.length)append(document.createElement('p'),0,0,0);flush();}
   return pages;
  }finally{box.remove();}
 }

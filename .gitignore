@@ -15,6 +15,7 @@ dist/
 **/*profile*/
 **/*backup*.zip
 local/
+examples/runtime.js
 .codex/
 .codexwolf/
 Canvas Clipper/開始使用.html

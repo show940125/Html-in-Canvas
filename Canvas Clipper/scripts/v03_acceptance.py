@@ -1,4 +1,4 @@
-from browser_support import chrome_launch_options
+from browser_support import chrome_launch_options,software_args
 """Real browser acceptance for v0.3. All material is generated fixture content."""
 from pathlib import Path
 from functools import partial
@@ -12,12 +12,13 @@ class Quiet(SimpleHTTPRequestHandler):
 def check(name,passed,detail=None):
  checks.append(dict(name=name,passed=bool(passed),detail=detail));print(('PASS ' if passed else 'FAIL ')+name,flush=True)
  if not passed:raise AssertionError(str(detail))
-def saved(page):page.locator('.save-state.saved').wait_for(timeout=15000)
+def saved(page):
+ page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');page.locator('.save-state.saved').wait_for(state='attached',timeout=15000)
 def data(page):return page.evaluate('''async()=>{const db=await new Promise((r,j)=>{const q=indexedDB.open('canvas-clipper');q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});const rows=await new Promise(r=>{const q=db.transaction('projects').objectStore('projects').getAll();q.onsuccess=()=>r(q.result)});db.close();return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))[0];}''')
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'dist')));Thread(target=server.serve_forever,daemon=True).start()
 try:
  with sync_playwright() as p:
-  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement'])
+  browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement']+software_args())
   context=browser.new_context(viewport={'width':1680,'height':1100},accept_downloads=True);page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   try:
    page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.locator('input[accept^=".json"]').set_input_files(ROOT/'tests'/'fixtures'/'acceptance-fixture.json');page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');saved(page)
@@ -42,12 +43,15 @@ try:
    with page.expect_download() as download:export.get_by_role('button',name='下載圖片',exact=True).click()
    download.value.save_as(OUT/'selection.png');check('composite PNG exports with relationship layer',(OUT/'selection.png').stat().st_size>8000 and export.locator('.export-relations path').count()>1)
    export.get_by_role('button',name='關閉圖片輸出',exact=True).click()
+   page.get_by_role('button',name='雙篇比較',exact=False).click();reader=page.get_by_role('dialog',name='雙篇比較');reader.wait_for();page.wait_for_timeout(350);check('two-column reader retains native Canvas',reader.locator('.reading-column').count()==2 and reader.locator('.interactive-surface').get_attribute('data-surface-mode')=='native');note=reader.get_by_role('textbox',name='閱讀筆記 1');native_click_note=note.bounding_box();page.mouse.click(native_click_note['x']+20,native_click_note['y']+20);page.keyboard.press('Control+A');page.keyboard.insert_text('比較閱讀的中文筆記');saved(page);check('native comparison note persists under dark theme',note.input_value()=='比較閱讀的中文筆記');reader.get_by_role('button',name='關閉閱讀',exact=True).click();reader.wait_for(state='hidden')
    page.get_by_role('button',name='書本閱讀',exact=False).first.click();book=page.get_by_role('dialog',name='書本閱讀');book.get_by_role('button',name='下一頁',exact=True).wait_for();page.wait_for_function('()=>!document.querySelector(".book-loading")',timeout=60000)
    check('long articles paginate into multiple pages',not book.locator('[role=alert]').count() and int(book.get_by_label('閱讀頁碼',exact=True).inner_text().split('/')[-1])>20,book.locator('[role=alert]').all_text_contents())
    check('book uses real WebGL HTML textures',book.locator('canvas[data-renderer="webgl2-html-book"]').count()==1,book.locator('.book-renderer').inner_text())
    first=book.get_by_label('閱讀頁碼',exact=True).inner_text();book.get_by_role('button',name='下一頁',exact=True).click();page.wait_for_timeout(650);check('functional GPU turn advances pages',book.get_by_label('閱讀頁碼',exact=True).inner_text()!=first)
    book.get_by_role('button',name='閱讀筆記',exact=True).click();page.wait_for_function('()=>!document.querySelector(".book-loading")',timeout=60000);book.get_by_role('textbox',name='書本閱讀筆記').fill('書本閱讀中文筆記');saved(page);check('book note uses native text input',book.get_by_role('textbox',name='書本閱讀筆記').input_value()=='書本閱讀中文筆記')
    page.screenshot(path=str(OUT/'live-html-book.png'));book.get_by_role('button',name='關閉書本閱讀',exact=True).click();saved(page);check('reading anchor persists',bool(data(page).get('readingProgress')))
+   page.get_by_role('button',name='新增卡片',exact=True).click();modal=page.get_by_role('dialog');modal.get_by_label('新卡片標題',exact=True).fill('復原後仍保留筆記');modal.get_by_label('新卡片內容',exact=True).fill('新建材料的文字。');modal.get_by_role('button',name='加入卡片板 ↗',exact=True).click();saved(page);page.get_by_role('textbox',name='我的筆記',exact=True).fill('建立後才新增的觀點，重做也要保留。');saved(page)
+   page.get_by_role('button',name='復原操作',exact=True).click();saved(page);check('undo creation removes the material',len(data(page)['cards'])==20);page.get_by_role('button',name='重做操作',exact=True).click();saved(page);check('redo creation retains later note edits',next(c for c in data(page)['cards'] if c['title']=='復原後仍保留筆記')['note']=='建立後才新增的觀點，重做也要保留。')
    page.set_viewport_size({'width':600,'height':900});page.screenshot(path=str(OUT/'narrow-desk.png'));check('narrow workspace avoids horizontal overflow',page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
    check('no unhandled browser errors',not errors,errors)
   except Exception:
