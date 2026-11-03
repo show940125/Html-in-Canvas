@@ -48,3 +48,17 @@ for (const size of [16,48,128]) {
   const ihdr=Buffer.alloc(13); ihdr.writeUInt32BE(size,0);ihdr.writeUInt32BE(size,4);ihdr[8]=8;ihdr[9]=6;
   await writeFile(`dist/icons/${size}.png`,Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',deflateSync(raw)),chunk('IEND',Buffer.alloc(0))]));
 }
+// Git checkouts and local Windows edits can use different line endings.
+// Normalize only valid UTF-8 text so clean-clone builds have identical bytes.
+async function normalizeText(directory) {
+  for (const entry of await readdir(directory, { withFileTypes:true })) {
+    const name = `${directory}/${entry.name}`;
+    if (entry.isDirectory()) { await normalizeText(name); continue; }
+    if (!/\.(html|json|js|css|svg|md|txt)$/.test(entry.name) && !['LICENSE','NOTICE'].includes(entry.name)) continue;
+    const bytes = await readFile(name);
+    let value;
+    try { value = new TextDecoder('utf-8', { fatal:true }).decode(bytes); } catch { continue; }
+    if (value.includes('\r')) await writeFile(name, value.replace(/\r\n?/g, '\n'));
+  }
+}
+await normalizeText('dist');

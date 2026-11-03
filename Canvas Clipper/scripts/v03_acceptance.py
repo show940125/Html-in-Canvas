@@ -14,6 +14,14 @@ def check(name,passed,detail=None):
  if not passed:raise AssertionError(str(detail))
 def saved(page):
  page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');page.locator('.save-state.saved').wait_for(state='attached',timeout=15000)
+
+def panel(page,side,opened):
+ names={'left':'左側欄','right':'右側欄','top':'上方欄'}
+ page.get_by_role('button',name=('展開' if opened else '收起')+names[side],exact=True).first.click()
+ page.wait_for_function('([side,value])=>document.querySelector(".app-v3").dataset[side]===value',arg=[side,'open' if opened else 'closed'])
+ # Panel width changes move the remaining toolbar controls. Wait for layout
+ # and native Canvas hit geometry before targeting another control.
+ page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))')
 def data(page):return page.evaluate('''async()=>{const db=await new Promise((r,j)=>{const q=indexedDB.open('canvas-clipper');q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error)});const rows=await new Promise(r=>{const q=db.transaction('projects').objectStore('projects').getAll();q.onsuccess=()=>r(q.result)});db.close();return rows.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))[0];}''')
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'dist')));Thread(target=server.serve_forever,daemon=True).start()
 try:
@@ -25,10 +33,10 @@ try:
    check('v3 native desk loads',page.locator('.board-surface').get_attribute('data-mode')=='native')
    page.get_by_role('button',name='主題與介面',exact=True).click();settings=page.get_by_role('dialog',name='主題與介面');settings.get_by_role('button',name='海藍',exact=True).click();settings.get_by_label('明暗模式').select_option('dark');settings.get_by_role('button',name='完成',exact=True).click()
    check('palette and dark theme apply',page.locator('.app-v3').get_attribute('data-palette')=='ocean' and page.locator('.app-v3').get_attribute('data-theme')=='dark')
-   page.get_by_role('button',name='收起左側欄',exact=True).first.click();page.get_by_role('button',name='收起右側欄',exact=True).first.click();page.get_by_role('button',name='收起上方欄',exact=True).click()
+   for side in ['left','right','top']:panel(page,side,False)
    check('all three panels collapse',all(page.locator('.app-v3').get_attribute('data-'+s)=='closed' for s in ['left','right','top']))
-   page.reload();page.wait_for_load_state('networkidle');check('panel and appearance preferences survive reload',page.locator('.app-v3').get_attribute('data-left')=='closed' and page.locator('.app-v3').get_attribute('data-theme')=='dark')
-   page.get_by_role('button',name='展開左側欄',exact=True).last.click();page.get_by_role('button',name='展開右側欄',exact=True).first.click();page.get_by_role('button',name='展開上方欄',exact=True).click()
+   page.reload();page.wait_for_load_state('networkidle');check('panel and appearance preferences survive reload',all(page.locator('.app-v3').get_attribute('data-'+side)=='closed' for side in ['left','right','top']) and page.locator('.app-v3').get_attribute('data-theme')=='dark')
+   for side in ['left','right','top']:panel(page,side,True)
    page.locator('.card-list-select').first.click();page.get_by_role('button',name='建立主題框',exact=True).click();modal=page.get_by_role('dialog');modal.get_by_label('主題名稱',exact=True).fill('磁吸驗收');modal.get_by_label('主題框型',exact=True).select_option('folder');modal.get_by_label('文章預設框型',exact=True).select_option('hexagon');modal.get_by_role('button',name='建立 ↗',exact=True).click();saved(page)
    check('group frame and card inheritance persist',data(page)['groups'][0]['frame']=='folder' and 'frame-hexagon' in page.locator('.clip-card').first.get_attribute('class'))
    before=data(page);box=page.locator('.board-surface').bounding_box();handle=page.locator('.card-handle').nth(1).bounding_box();page.mouse.move(handle['x']+60,handle['y']+12);page.mouse.down();page.mouse.move(box['x']+350+before['view']['x'],box['y']+150+before['view']['y'],steps=10);page.locator('.drop-hint').wait_for()
