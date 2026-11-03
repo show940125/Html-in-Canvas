@@ -12,7 +12,7 @@
 
 ![Canvas Clipper 閱讀桌](docs/media/cover.png)
 
-[操作影片](docs/media/canvas-clipper-v03.mp4) · [下載版本](https://github.com/show940125/Html-in-Canvas/releases) · [使用指南](Canvas%20Clipper/GUIDE.html) · [技術架構](docs/architecture.md)
+[操作影片](docs/media/canvas-clipper-v03.mp4) · [下載版本](https://github.com/show940125/Html-in-Canvas/releases) · [使用指南](Canvas%20Clipper/GUIDE.html) · [技術架構](docs/architecture.md) · [驗收紀錄](docs/acceptance-v0.3.md)
 
 - **磁吸自適應**：放下前預覽橫向／縱向插入，主題伸縮、周邊局部讓位，整次變更一步復原。
 - **自己的工作區**：三區收合、六組主題色、深淺模式、六種框型及可調卡片尺寸。
