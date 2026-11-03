@@ -17,7 +17,7 @@ def write():
 npm=['cmd.exe','/c','npm'] if os.name=='nt' else ['npm']
 run('unit',npm+['test','--','--reporter=json','--outputFile=output/v03/unit-tests.json'])
 run('build',npm+['run','build'])
-for name in ['v03_acceptance','v03_deep_acceptance','examples_acceptance','migration_acceptance','extension_acceptance','image_permission_acceptance','workload_acceptance']:
+for name in ['v03_acceptance','v03_deep_acceptance','compatibility_acceptance','examples_acceptance','migration_acceptance','extension_acceptance','image_permission_acceptance','workload_acceptance']:
  run(name,[sys.executable,str(ROOT/'scripts'/(name+'.py'))])
 hashes={p.relative_to(ROOT/'dist').as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/'dist').rglob('*')) if p.is_file()}
 (OUT/'build-hashes.json').write_text(json.dumps(hashes,indent=2),encoding='utf-8')

@@ -46,7 +46,10 @@ jobs:
       - run: npm --prefix "Canvas Clipper" run build
       - run: python -m pip install -r "Canvas Clipper/requirements-test.txt"
       - run: python -m playwright install --with-deps chromium
-      - run: python "Canvas Clipper/scripts/v03_acceptance.py"
+      - name: Native Canvas and WebGL
+        run: python "Canvas Clipper/scripts/v03_acceptance.py"
+      - name: HTML compatibility without Canvas or GPU
+        run: python "Canvas Clipper/scripts/compatibility_acceptance.py"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -14,6 +14,7 @@ npm --prefix "Canvas Clipper" run build
 cd "Canvas Clipper"
 python scripts/v03_acceptance.py
 python scripts/v03_deep_acceptance.py
+python scripts/compatibility_acceptance.py
 python scripts/workload_acceptance.py
 python scripts/migration_acceptance.py
 python scripts/extension_acceptance.py
