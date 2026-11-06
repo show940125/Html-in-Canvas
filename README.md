@@ -33,6 +33,8 @@
 
 把 AI 生成的 HTML 簡報帶進 Chrome 編輯：保留真實 HTML，提供文字、圖片、自由物件、圖層、群組、歸藏版型及本機專案備份。編輯舞台使用固定尺寸的隔離框架與 HTML-in-Canvas，並提供 HTML 相容模式。
 
+![Canvas Slides HTML 簡報編輯畫面](docs/media/canvas-slides-editor.png)
+
 [功能與安裝](Canvas%20Slides/README.md) · [開始使用](Canvas%20Slides/GUIDE.html) · [來源與適配](Canvas%20Slides/SOURCES.md) · [驗收邊界](Canvas%20Slides/ACCEPTANCE.md) · [Canvas 技術與優化方向](Canvas%20Slides/TECHNICAL.md)
 
 Canvas Slides 擁有獨立的資料庫、建置與版本。一般 HTML 的未知腳本採受限匯入，Chrome 157 已通過原生自動驗證，實體 IME、GPU、跨螢幕 DPI、原生資料夾與系統列印仍待實機驗收。
