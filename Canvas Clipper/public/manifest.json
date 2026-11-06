@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Canvas Clipper 互動式閱讀桌",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "圖文摘錄、聚焦閱讀、並排比較、主題框、標籤、關係線與本機完整備份。",
   "minimum_chrome_version": "156",
   "permissions": [

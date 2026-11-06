@@ -1,4 +1,4 @@
-# Canvas Clipper v0.3
+# Canvas Clipper v0.4
 
 Html in Canvas 的第一個插件，使用 Apache-2.0 授權。
 
@@ -10,5 +10,5 @@ Html in Canvas 的第一個插件，使用 Apache-2.0 授權。
 - [x] ZIP v3，繼續匯入 v1／v2；原文、編輯稿及圖片分別保存。
 - [x] 獨立技術範例、使用指南、操作影片及可重現合成測試資料。
 
-驗證結果與人工步驟見 [v0.3 驗收紀錄](docs/acceptance-v0.3.md)。
+v0.4 加入面板邊緣控制、整卡拖曳、主題單元層級、方向性玻璃、可調字級與共同動畫幾何。更新與驗證界線見 [v0.4 說明](Canvas%20Clipper/UI_REFINEMENT.md)；歷史基線見 [v0.3 驗收紀錄](docs/acceptance-v0.3.md)。
 更新前先從舊安裝下載全部專案備份，操作見 [使用指南](Canvas%20Clipper/GUIDE.html)。

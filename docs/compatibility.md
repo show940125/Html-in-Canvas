@@ -2,7 +2,8 @@
 
 | 環境 | 狀態 |
 |---|---|
-| Windows、Chrome 156.0.8078.80、CanvasDrawElement 啟用 | 本機隔離設定檔驗證原生繪製、中文輸入、150% DPI、分頁、WebGL 互動及輸出 |
+| Windows、Chrome 157.0.8103.39，測試帶 CanvasDrawElement | v0.4 本機隔離設定檔通過原生／HTML 模式、150% DPI、分頁、WebGL、輸出與新增介面互動 |
+| Windows、Chrome 156.0.8078.80、CanvasDrawElement 啟用 | v0.3 歷史基線驗證原生繪製、中文輸入、150% DPI、分頁、WebGL 互動及輸出；v0.4 保留能力分支，本輪未重開156實機 |
 | Chrome 新版 API | 依官方介面提供能力探測及紋理上傳路徑；實機與 CI 結果另外列示 |
 | HTML 相容模式／停用原生 API | 保留閱讀桌、圖文編輯、分頁閱讀及列印；圖片組圖需要原生 Canvas |
 | WebGL 不可用或中斷 | 切換平面閱讀並顯示原因 |

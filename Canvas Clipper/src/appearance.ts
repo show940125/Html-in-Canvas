@@ -2,8 +2,8 @@ export const FRAME_IDS=['rounded','cut','note','folder','bubble','hexagon'] as c
 export type FrameId=typeof FRAME_IDS[number];
 export const FRAME_NAMES:Record<FrameId,string>={rounded:'圓角矩形',cut:'切角',note:'折角便箋',folder:'資料夾',bubble:'對話框',hexagon:'六角框'};
 export const PALETTES=[{id:'paper',name:'紙白',accent:'#52616b'},{id:'forest',name:'森林',accent:'#356348'},{id:'ocean',name:'海藍',accent:'#27658a'},{id:'apricot',name:'暖杏',accent:'#935a30'},{id:'berry',name:'莓紫',accent:'#875477'},{id:'graphite',name:'石墨',accent:'#59616e'}] as const;
-export interface Appearance{palette:string;scheme:'light'|'dark'|'system';accent:string;motion:boolean;diagnostics:boolean;}
-export const DEFAULT_APPEARANCE:Appearance={palette:'forest',scheme:'light',accent:'',motion:true,diagnostics:false};
+export interface Appearance{palette:string;scheme:'light'|'dark'|'system';accent:string;motion:boolean;diagnostics:boolean;fontSize:number;}
+export const DEFAULT_APPEARANCE:Appearance={palette:'forest',scheme:'light',accent:'',motion:true,diagnostics:false,fontSize:17};
 export function isColor(value:unknown):value is string{return typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);}
 export function isFrame(value:unknown):value is FrameId{return FRAME_IDS.includes(value as FrameId);}
 export function luminance(hex:string){const values=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return values[0]*.2126+values[1]*.7152+values[2]*.0722;}

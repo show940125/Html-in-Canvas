@@ -8,11 +8,11 @@
 
 收集網頁圖文、並排閱讀、主題分類、標籤、關係連線、完整本機備份及可搜尋 PDF。
 
-**Canvas Clipper v0.3**：把圖文整理成可操作的閱讀桌，讓視覺效果服務於分類、閱讀和輸出。
+**Canvas Clipper v0.4.0**：把圖文整理成可操作的閱讀桌，讓視覺效果服務於分類、閱讀和輸出。新增面板邊緣收合、整卡拖曳、主題單元排序、方向性毛玻璃、可調字級及平滑自適應。
 
-![Canvas Clipper 閱讀桌](docs/media/cover.png)
+![Canvas Clipper v0.4 閱讀桌](docs/media/canvas-clipper-v04.png)
 
-[操作影片](docs/media/canvas-clipper-v03.mp4) · [下載版本](https://github.com/show940125/Html-in-Canvas/releases) · [使用指南](Canvas%20Clipper/GUIDE.html) · [技術架構](docs/architecture.md) · [驗收紀錄](docs/acceptance-v0.3.md)
+[下載 v0.4.0](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-clipper-v0.4.0) · [使用指南](Canvas%20Clipper/GUIDE.html) · [介面更新與技術評估](Canvas%20Clipper/UI_REFINEMENT.md) · [技術架構](docs/architecture.md) · [v0.3 操作影片](docs/media/canvas-clipper-v03.mp4)
 
 - **磁吸自適應**：放下前預覽橫向／縱向插入，主題伸縮、周邊局部讓位，整次變更一步復原。
 - **自己的工作區**：三區收合、六組主題色、深淺模式、六種框型及可調卡片尺寸。
