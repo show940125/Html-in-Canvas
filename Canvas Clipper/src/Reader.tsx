@@ -2,18 +2,29 @@ import { useEffect,useRef,useState } from 'react';
 import { InteractiveSurface } from './InteractiveSurface';
 import { RichContent,RichEditor } from './RichContent';
 import { docText,sourceLabel,type Clip,type Project,type RichDoc } from './model';
-interface Props{project:Project;ids:string[];origin?:DOMRect;forceDOM:boolean;onClose:()=>void;onCard:(id:string,fields:Partial<Clip>)=>void;onBook?:(id:string)=>void;}
-export function Reader({project,ids,origin,forceDOM,onClose,onCard,onBook}:Props){
+import type {DrawableCanvas} from '../../shared/html-in-canvas/canvas';
+interface Props{project:Project;ids:string[];origin?:DOMRect;forceDOM:boolean;motion?:boolean;onClose:()=>void;onCard:(id:string,fields:Partial<Clip>)=>void;onBook?:(id:string)=>void;}
+export function Reader({project,ids,origin,forceDOM,motion=true,onClose,onCard,onBook}:Props){
   const dialog=useRef<HTMLDialogElement>(null),panel=useRef<HTMLDivElement>(null);
   const[selected,setSelected]=useState(ids),[editing,setEditing]=useState(false),[original,setOriginal]=useState(false);
   const animation=useRef<Animation|undefined>(undefined);
   const frames=useRef<Keyframe[]|undefined>(undefined);
   useEffect(()=>{
     const d=dialog.current,p=panel.current;if(!d||!p)return;d.showModal();
-    if(origin&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const r=p.getBoundingClientRect();const start=`translate(${origin.x-r.x}px,${origin.y-r.y}px) scale(${origin.width/r.width},${origin.height/r.height})`;frames.current=[{transform:start,opacity:.5},{transform:'none',opacity:1}];animation.current=p.animate(frames.current,{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'});}
-    return()=>{animation.current?.cancel();d.close();};
+    let disposed=false,frame=0;const listeners:Array<()=>void>=[];
+    p.inert=true;p.dataset.transition='opening';p.setAttribute('aria-busy','true');
+    const ready=()=>{if(!disposed){p.inert=false;p.dataset.transition='idle';p.removeAttribute('aria-busy');}};
+    // A compositor transform does not resize the Canvas. Repaint after the
+    // animation settles so native hit geometry uses the final dialog origin.
+    const refreshGeometry=()=>{frame=requestAnimationFrame(()=>{
+      const canvases=Array.from(p.querySelectorAll<DrawableCanvas>('canvas')).filter(c=>typeof c.requestPaint==='function');let pending=canvases.length;
+      if(!pending){ready();return;}
+      for(const canvas of canvases){const painted=()=>{if(!--pending)ready();};canvas.addEventListener('paint',painted,{once:true});listeners.push(()=>canvas.removeEventListener('paint',painted));canvas.requestPaint();}
+    });};
+    if(motion&&origin&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const r=p.getBoundingClientRect();const start=`translate(${origin.x-r.x}px,${origin.y-r.y}px) scale(${origin.width/r.width},${origin.height/r.height})`;frames.current=[{transform:start,opacity:.5},{transform:'none',opacity:1}];animation.current=p.animate(frames.current,{duration:300,easing:'cubic-bezier(.2,.8,.2,1)'});void animation.current.finished.then(refreshGeometry,()=>{});}else refreshGeometry();
+    return()=>{disposed=true;cancelAnimationFrame(frame);listeners.forEach(remove=>remove());animation.current?.cancel();d.close();};
   },[]);
-  function close(){const p=panel.current;if(p&&frames.current&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const a=p.animate([...frames.current].reverse(),{duration:240,easing:'ease-in',fill:'forwards'});void a.finished.then(onClose,()=>onClose());}else onClose();}
+  function close(){const p=panel.current;if(p&&motion&&frames.current&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const a=p.animate([...frames.current].reverse(),{duration:240,easing:'ease-in',fill:'forwards'});void a.finished.then(onClose,()=>onClose());}else onClose();}
   const cards=selected.map(id=>project.cards.find(c=>c.id===id)).filter((c):c is Clip=>!!c);
   function edit(id:string,doc:RichDoc){onCard(id,{editedDoc:doc,workingText:docText(doc)});}
   return <dialog className="reader-dialog" ref={dialog} onCancel={e=>{e.preventDefault();close();}} aria-label={ids.length===2?'雙篇比較':'全文閱讀'} onClick={e=>{if(e.target===e.currentTarget)close();}}>
