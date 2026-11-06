@@ -1,0 +1,46 @@
+{
+  "theme": "forest-ink",
+  "family": "magazine",
+  "slides": [
+    {
+      "id": "vitamin-c-cover",
+      "layout": "M01",
+      "title": "維他命C的好處"
+    },
+    {
+      "id": "collagen-and-repair",
+      "layout": "M04",
+      "title": "修復的底氣"
+    },
+    {
+      "id": "four-benefits",
+      "layout": "M03",
+      "title": "四個好處"
+    },
+    {
+      "id": "evidence-and-expectations",
+      "layout": "M09",
+      "title": "補足就好"
+    },
+    {
+      "id": "everyday-food-routine",
+      "layout": "M06",
+      "title": "把C吃進去"
+    }
+  ],
+  "images": [
+    {
+      "path": "images/vitamin-c-fruits.png",
+      "bytes": 2852778,
+      "sha256": "571a69b570052aedbbeeb14eaa61f8a4b7eeae9b073e25d9c6f85b94969e80ad",
+      "source": "OpenAI image generation; food illustration only"
+    },
+    {
+      "path": "images/everyday-plate.png",
+      "bytes": 2540449,
+      "sha256": "344273c9eb0a1896c73c51ef53068d5755ebe07bf7c211d6197127ce3d8788f7",
+      "source": "OpenAI image generation; food illustration only"
+    }
+  ],
+  "zipSha256": "0917dab1d465a45d649bcc277e3cc3ed029899ea01ed6df2ca980887150425a4"
+}

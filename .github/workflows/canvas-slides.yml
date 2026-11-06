@@ -1,0 +1,53 @@
+name: Canvas Slides
+on:
+  push:
+    branches: [main]
+    paths: ["Canvas Slides/**", "shared/html-in-canvas/**", ".github/workflows/canvas-slides.yml"]
+  pull_request:
+    paths: ["Canvas Slides/**", "shared/html-in-canvas/**", ".github/workflows/canvas-slides.yml"]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Canvas Slides/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: npm --prefix "Canvas Slides" ci
+      - run: npm --prefix "Canvas Slides" test
+      - run: npm --prefix "Canvas Slides" run build
+      - run: python -m pip install -r "Canvas Slides/requirements-test.txt"
+      - run: python -m playwright install --with-deps chromium
+      - name: Native MV3 workflow
+        run: python "Canvas Slides/scripts/acceptance.py"
+      - name: HTML compatibility workflow
+        run: python "Canvas Slides/scripts/acceptance.py" --dom
+      - name: Free objects and project roundtrip
+        run: python "Canvas Slides/scripts/advanced_acceptance.py"
+      - name: All registered layouts
+        run: python "Canvas Slides/scripts/layouts_acceptance.py"
+      - name: Build standalone playback fixtures
+        working-directory: Canvas Slides
+        run: node scripts/generate-fixtures.mjs
+      - name: Offline animation and presenter runtimes
+        run: python "Canvas Slides/scripts/playback_acceptance.py"
+      - name: Build editable example
+        working-directory: Canvas Slides
+        run: node examples/vitamin-c-style-a/build.mjs
+      - name: Color, print and sequential playback fidelity
+        run: python "Canvas Slides/scripts/fidelity_acceptance.py"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canvas-slides-evidence
+          path: |
+            Canvas Slides/dist
+            Canvas Slides/output/**/results*.json
+            Canvas Slides/output/**/*.png

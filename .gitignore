@@ -23,3 +23,9 @@ Canvas Clipper/驗收紀錄.md
 Canvas Clipper/CURRENT_PROGRESS.md
 Canvas Clipper/_d_meta.json
 Canvas Clipper/extension-identity.json
+Canvas Slides/src/generated/
+
+# Reproducible demo bundles are delivered as release assets.
+Canvas Slides/examples/vitamin-c-style-a/index.html
+Canvas Slides/examples/vitamin-c-style-a/維他命C的好處_風格A_五頁.html
+Canvas Slides/examples/vitamin-c-style-a/維他命C_風格A_在線編輯測試.zip

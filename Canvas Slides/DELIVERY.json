@@ -1,0 +1,23 @@
+{
+  "version": "0.1.2-preview",
+  "date": "2026-11-06",
+  "extensionId": "ehmlgpnbnkmfggnamoknkaadeojokeki",
+  "artifact": "release/Canvas-Slides-v0.1.2-preview.zip",
+  "sha256": "fd5d6a08343e168b7c85d66b35fde6ca181ee65b9f7fa1c9579087b179ca0326",
+  "bytes": 1133378,
+  "distFilesCompared": 113,
+  "unitTestsPassed": 24,
+  "browserTests": {
+    "native": 13,
+    "dom": 13,
+    "advanced": 17,
+    "layouts": 32,
+    "playback": 34,
+    "fidelity": 35,
+    "vitaminCSample": 21
+  },
+  "browser": "Chrome 157.0.8103.39 headless, isolated profiles",
+  "manualAcceptanceComplete": false,
+  "remoteWorkflow": ".github/workflows/canvas-slides.yml",
+  "webStorePublished": false
+}

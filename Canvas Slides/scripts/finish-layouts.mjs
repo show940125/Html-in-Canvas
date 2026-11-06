@@ -1,0 +1,23 @@
+import {JSDOM} from 'jsdom';
+// References contain abbreviated examples ("5 more", "N more"). Expand them
+// into usable presets; keep this adaptation explicit in SOURCES.md.
+export function finishLayout(layout){
+ const doc=new JSDOM(layout.html).window.document,section=doc.querySelector('section');
+ const fill=(selector,count,adjust)=>{const first=section.querySelector(selector);if(!first)return;const parent=first.parentElement;for(let i=1;i<count;i++){const copy=first.cloneNode(true);adjust?.(copy,i);parent.append(copy);}};
+ if(layout.id==='S01'){const h=section.querySelector('h1');if(h){h.textContent='讓想法\n形成方向';h.style.cssText+=';font-size:min(7vw,12vh);white-space:pre-line';}}
+ if(layout.id==='S02'){fill('.tl-node',3,(n,i)=>{n.querySelector('.yr').textContent=String(2024+i);n.querySelector('.multi').textContent=`${i+2}×`;n.querySelector('.desc').textContent=['觀察與準備','實驗與驗證','落地與擴展'][i];});}
+ if(layout.id==='S03'){section.className='slide split';section.innerHTML='<div class="half b-accent"><h1 style="font-size:8vw;font-weight:200" data-anim>從想法<br>到行動</h1></div><div class="half" style="background:var(--grey-1);padding:8vw"><p style="font-size:2.3vw;line-height:1.7" data-anim>在這裡說明你的判斷。<br>讓一頁只承載一個清楚的觀點。</p></div>';}
+ if(layout.id==='S04'){section.querySelector('.cell-6')?.classList.add('sub-grid-3-2');fill('.cell',6,(n,i)=>{n.querySelector('.cell-num').textContent=String(i+1).padStart(2,'0');n.querySelector('h4').textContent=`觀察 ${i+1}`;n.querySelector('p').textContent='補充這一項的說明與依據。';});}
+ if(layout.id==='S05'){const old=section.querySelector('.grid-2-9');old.outerHTML='<div class="stack-row">'+Array.from({length:3},(_,i)=>`<article class="stack-block" style="padding:2.5vw;background:var(--grey-1);min-width:0"><span class="t-cat">0${i+1}</span><h2 style="font-size:3vw;font-weight:300;margin:3vh 0" data-anim>第${i+1}個層次</h2><p style="font-size:1.5vw;line-height:1.8" data-anim>說明這個層次的角色、目標與相互關係。</p></article>`).join('')+'</div>';}
+ if(layout.id==='S06')fill('.tower-col',4,(n,i)=>{n.querySelector('.num-mega').textContent=[72,48,96][i-1]+'K';n.querySelector('.bar-tower').style.setProperty('--h',[24,30,20][i-1]+'vh');});
+ if(layout.id==='S07')fill('.bar-row',4,(n,i)=>{n.querySelector('.bar-lbl').textContent=`觀察項目 ${i+1}`;n.querySelector('.bar-fill').style.setProperty('--w',[72,58,40][i-1]+'%');n.querySelector('.bar-num').textContent=String([72,58,40][i-1]);});
+ if(layout.id==='S08')for(const[n,i]of [...section.querySelectorAll('.duo-half')].map((n,i)=>[n,i])){const p=doc.createElement('p');p.textContent=i?'說明採取行動後的改變與價值。':'描述目前的做法、限制與觀察。';p.style.cssText='font-size:1.6vw;line-height:1.8;margin-top:4vh';p.setAttribute('data-anim','');n.append(p);}
+ if(layout.id==='S11')fill('.tl-h-node',5,(n,i)=>{n.querySelector('.num').textContent=String(i+1).padStart(2,'0');n.querySelector('.lbl').textContent=['Explore','Build','Test','Launch'][i-1];});
+ if(['S13','S14'].includes(layout.id)){const duo=section.querySelector('.duo-compare');if(duo&&duo.children.length===2){const line=doc.createElement('span');line.className='vrule';duo.insertBefore(line,duo.lastElementChild);duo.lastElementChild.style.cssText+=';display:grid;gap:12px;grid-template-rows:repeat(3,minmax(0,1fr));min-width:0';}}
+ if(layout.id==='S13')for(const n of section.querySelectorAll('.sub-card'))n.style.cssText+=';padding:12px 18px;min-height:0;display:grid;grid-template-columns:34px 1fr;gap:2px 10px';
+ if(layout.id==='S13')for(const n of section.querySelectorAll('.sub-card')){n.querySelector('.t-cat').style.gridRow='1 / span 2';n.querySelector('h3').style.cssText='font-size:22px;font-weight:500;margin:0';n.querySelector('p').style.cssText='grid-column:2;font-size:16px;line-height:1.6;margin:0';}
+ if(layout.id==='S14'){const right=section.querySelector('.duo-compare').lastElementChild;right.style.cssText='position:relative;display:block;min-height:0;height:42vh';right.querySelector('svg').style.height='34vh';right.querySelector('p').style.cssText='font-size:18px;text-align:center;margin:0';}
+ for(const image of section.querySelectorAll('img'))image.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="840" height="400"><rect width="840" height="400" fill="#e6e9e9"/><circle cx="350" cy="170" r="75" fill="#b4c4bd"/><path d="M100 340l190-180 155 140 120-90 175 130" fill="#748e80"/></svg>');
+ const walker=doc.createTreeWalker(section,4);let node;while(node=walker.nextNode()){if(node.textContent.trim()==='...')node.textContent='在此補充你的內容';node.textContent=node.textContent.replace(/\[必填\]/g,'').replace(/中文主标题\s*\(可在某字加 italic 微强调\)/g,'讓想法形成方向').replace(/DECK 标题/g,'YOUR PRESENTATION').replace(/章节英文 \/ SECTION EN/g,'A NEW PERSPECTIVE');}
+ return{...layout,html:section.outerHTML};
+}

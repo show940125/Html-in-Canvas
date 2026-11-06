@@ -1,0 +1,11 @@
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import {createRequire} from 'node:module';
+import {readFile,mkdir} from 'node:fs/promises';
+import {build} from 'esbuild';
+import {JSDOM} from 'jsdom';
+const here=fileURLToPath(new URL('.',import.meta.url));process.chdir(here);
+const dom=new JSDOM('<!doctype html><html><body></body></html>');globalThis.window=dom.window;globalThis.document=dom.window.document;globalThis.DOMParser=dom.window.DOMParser;
+await mkdir('output',{recursive:true});
+await build({absWorkingDir:here,entryPoints:[resolve(here,'build-entry.ts')],outfile:resolve(here,'output/build.cjs'),bundle:true,platform:'node',format:'cjs',target:'node24',plugins:[{name:'raw',setup(b){b.onResolve({filter:/\?raw$/},args=>({path:resolve(args.resolveDir,args.path.slice(0,-4)),namespace:'raw'}));b.onLoad({filter:/.*/,namespace:'raw'},async args=>({contents:await readFile(args.path,'utf8'),loader:'text'}));}}]});
+createRequire(import.meta.url)(resolve('output/build.cjs'));

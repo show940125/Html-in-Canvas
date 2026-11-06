@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Canvas Slides · HTML 簡報編輯器",
+  "description": "在 Chrome 本機編輯 HTML 簡報：文字、圖片、自由物件、歸藏版型與離線輸出。",
+  "version": "0.1.2",
+  "minimum_chrome_version": "156",
+  "action": {
+    "default_title": "開啟 Canvas Slides"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "sandbox": {
+    "pages": [
+      "stage.html"
+    ]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'self'; img-src 'self' blob: data:;",
+    "sandbox": "sandbox allow-scripts; default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src data: blob:; font-src data: blob:; media-src data: blob:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1qFRllzaKmX6RvgPHnf0T1eDNBUozxcayrpUuToNxyt3YMLnCrtNz31eunqrv6Bcd454DP3DrQBVROBs/d/GXzTW2rjCBNng0F5xfonWuCvGE8D9Pm7YUeAffsEgH3Xn2vOeSi89jsdmQYLUx78/qbhvKEDXFzVtbteh+oWMUhvnT8S5otBuRCR4QmOYkvlmL7E6dCW/f6VJKrtpN8aXr0Z5WgcoQLB0GNsAPuJFU0pA5QB8ToWxiBx/GKZB3fz/+uK/jWAd2M8fO2iTr7foAw51xXrPAYUg+0MrXKCFg/0V7LmhEwlfOF+iBoUzliagrkt7kGhDiZjHRNh3CVEf+wIDAQAB"
+}
