@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "bento": "ed197274e906a2d378d7c566b0de88e403321b50",
+  "engine": "3f6b6114b166760de18923d9e737932a5c0adbcb",
+  "files": [
+    {
+      "path": "output/upstream/editcore/core.js",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/src/js/editcore/core.js",
+      "bytes": 57180,
+      "sha256": "927c8faf2dfa5a3d383522f91d1ee7461f6e7d510425a8a1131df382b27253fc"
+    },
+    {
+      "path": "output/upstream/editcore/streamsplice.js",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/src/js/editcore/streamsplice.js",
+      "bytes": 23244,
+      "sha256": "45982b25eee039f56667f3e6848d0ad41704e893ef2501b264a5ce6ef3b864e6"
+    },
+    {
+      "path": "output/upstream/editcore/shadingsurgery.js",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/src/js/editcore/shadingsurgery.js",
+      "bytes": 24757,
+      "sha256": "6b29249d8556b2910b7a1a32407dc8e463cf0cd77b9f4a19b386d11717a0b2d5"
+    },
+    {
+      "path": "output/upstream/editcore/tagsurgery.js",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/src/js/editcore/tagsurgery.js",
+      "bytes": 7848,
+      "sha256": "a3acd21cdc3b078a087d248f71b91a8557d5e352358fc2d482cbc8b80a69ae4f"
+    },
+    {
+      "path": "output/upstream/editcore/type3surgery.js",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/src/js/editcore/type3surgery.js",
+      "bytes": 23127,
+      "sha256": "73549fde64e52af6979b138b1e9aa052c369009e54afe6b36fa13aa8fece0966"
+    },
+    {
+      "path": "src/vendor/utils/freetext-script.ts",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/src/js/utils/freetext-script.ts",
+      "bytes": 3444,
+      "sha256": "ad63d30b217ea0096448dad8c46bda70e312ba577aee7aa95193046be0f89a4a"
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/LICENSE",
+      "bytes": 34523,
+      "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef"
+    },
+    {
+      "path": "output/upstream/editcore.tgz",
+      "url": "https://raw.githubusercontent.com/alam00000/bentopdf/ed197274e906a2d378d7c566b0de88e403321b50/vendor/bentopdf-pdfium/bentopdf-pdfium-3f6b6114b166.tgz",
+      "bytes": 3322944,
+      "sha256": "2e724420325c0da1357283e5b7f24a713764bbefa43d4c1246c1bd8421ca991a"
+    },
+    {
+      "path": "public/editcore/editcore.js",
+      "archive": "2e724420325c0da1357283e5b7f24a713764bbefa43d4c1246c1bd8421ca991a",
+      "bytes": 221825,
+      "sha256": "6ac578d50cc6648a782666a4d0a8100eb14c8e897b34dde2272a2f36e7e26918"
+    },
+    {
+      "path": "public/editcore/editcore.wasm",
+      "archive": "2e724420325c0da1357283e5b7f24a713764bbefa43d4c1246c1bd8421ca991a",
+      "bytes": 7379196,
+      "sha256": "c47a6bae2b8ddf6468fe641f8eccaee57b2571d7c15590e1ceaaed06357423af"
+    },
+    {
+      "path": "public/fonts/NotoSansCJKtc-Regular.otf",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/Serif2.003/Sans/OTF/TraditionalChinese/NotoSansCJKtc-Regular.otf",
+      "bytes": 16435884,
+      "sha256": "dce08bd4fd91aa8aa76ed8fea4b694c2dfb8550f67871e326843212ddbeb88b4"
+    },
+    {
+      "path": "public/licenses/noto.txt",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/Serif2.003/Sans/LICENSE",
+      "bytes": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
+    },
+    {
+      "path": "public/models/PP-OCRv6_small_det.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_small_det_onnx_infer.tar",
+      "bytes": 9891840,
+      "sha256": "d218f6fbf0f1c23d2161bd6ac7f5eaa6104fa89955c09290497e31008e2618e4"
+    },
+    {
+      "path": "public/models/PP-OCRv6_small_rec.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_small_rec_onnx_infer.tar",
+      "bytes": 21319680,
+      "sha256": "d267ab077a44a0eedb1ea8f8c542d263f211de8e9d7a029bf9fcfff7e5a88fb1"
+    },
+    {
+      "path": "public/models/PP-OCRv6_medium_det.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_det_onnx_infer.tar",
+      "bytes": 62044160,
+      "sha256": "c5adb0b15de1b1838934eba1dd72e7529e7d80132216c6ee6d26eba6fa054fcf"
+    },
+    {
+      "path": "public/models/PP-OCRv6_medium_rec.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_rec_onnx_infer.tar",
+      "bytes": 76718080,
+      "sha256": "d8cc46c7163c83a151aef8fce5856b965860df90a875029216d605b0f607eaec"
+    },
+    {
+      "path": "output/upstream/editcore-corresponding-source.zip",
+      "url": "https://codeload.github.com/alam00000/bentopdf-pdfium-viewer/zip/3f6b6114b166760de18923d9e737932a5c0adbcb",
+      "bytes": 141919181,
+      "sha256": "89e1d0d730698264383018a8879579d7ff7611c403b0a0e6ce1f2ace54fbe1cf"
+    },
+    {
+      "path": "public/licenses/PaddleOCR-Apache-2.0.txt",
+      "url": "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/e5046169b225bcdfbe25d45b4e809ff0f1a69c2c/LICENSE",
+      "bytes": 11376,
+      "sha256": "3840c5c0c61c294264d2dd77b8777be6ddd90121ef4e0e64abcd22edea581d6e"
+    },
+    {
+      "path": "public/licenses/onnxruntime-MIT.txt",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE",
+      "bytes": 1073,
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "path": "public/licenses/onnxruntime-ThirdPartyNotices.txt",
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/ThirdPartyNotices.txt",
+      "bytes": 338088,
+      "sha256": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3"
+    },
+    {
+      "path": "public/licenses/Boost-1.0.txt",
+      "url": "https://www.boost.org/LICENSE_1_0.txt",
+      "bytes": 1338,
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    }
+  ]
+}

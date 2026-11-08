@@ -1,0 +1,42 @@
+name: Canvas PDF
+on:
+  push:
+    branches: [main]
+    paths: ["Canvas PDF/**", "shared/**", ".github/workflows/canvas-pdf.yml"]
+  pull_request:
+    paths: ["Canvas PDF/**", "shared/**", ".github/workflows/canvas-pdf.yml"]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: Canvas PDF/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/cache@v4
+        with:
+          path: |
+            Canvas PDF/output/upstream
+            Canvas PDF/public/models
+            Canvas PDF/public/fonts
+          key: canvas-pdf-assets-${{ hashFiles('Canvas PDF/assets.lock.json') }}
+      - run: npm --prefix "Canvas PDF" ci
+      - run: python "Canvas PDF/scripts/prepare_assets.py"
+      - run: npm --prefix "Canvas PDF" run check
+      - run: npm --prefix "Canvas PDF" test
+      - name: Build clean package without local runtime evidence
+        working-directory: Canvas PDF
+        run: npx vite build && node scripts/package.mjs --without-evidence
+      - name: Verify exact ZIP inventories and corresponding sources
+        run: python "Canvas PDF/scripts/verify_package.py" --hash-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canvas-pdf-build
+          path: dist/canvas-pdf-*

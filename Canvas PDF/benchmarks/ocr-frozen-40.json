@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "description": "40頁原創合成已知文字；非人工真實文件金標，不用於宣稱實際文件準確率。",
+  "pages": [
+    {
+      "page": 0,
+      "text": "文件辨識測試 第 1 頁\n原文日期：2026年11月1日\n應給付新臺幣10000元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 1,
+      "text": "文件辨識測試 第 2 頁\n原文日期：2026年11月2日\n應給付新臺幣10127元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 2,
+      "text": "文件辨識測試 第 3 頁\n原文日期：2026年11月3日\n應給付新臺幣10254元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 3,
+      "text": "文件辨識測試 第 4 頁\n原文日期：2026年11月4日\n應給付新臺幣10381元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 4,
+      "text": "文件辨識測試 第 5 頁\n原文日期：2026年11月5日\n應給付新臺幣10508元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 5,
+      "text": "文件辨識測試 第 6 頁\n原文日期：2026年11月6日\n應給付新臺幣10635元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 6,
+      "text": "文件辨識測試 第 7 頁\n原文日期：2026年11月7日\n應給付新臺幣10762元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 7,
+      "text": "文件辨識測試 第 8 頁\n原文日期：2026年11月8日\n應給付新臺幣10889元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 8,
+      "text": "文件辨識測試 第 9 頁\n原文日期：2026年11月9日\n應給付新臺幣11016元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 9,
+      "text": "文件辨識測試 第 10 頁\n原文日期：2026年11月10日\n應給付新臺幣11143元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 10,
+      "text": "文件辨識測試 第 11 頁\n原文日期：2026年11月11日\n應給付新臺幣11270元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 11,
+      "text": "文件辨識測試 第 12 頁\n原文日期：2026年11月12日\n應給付新臺幣11397元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 12,
+      "text": "文件辨識測試 第 13 頁\n原文日期：2026年11月13日\n應給付新臺幣11524元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 13,
+      "text": "文件辨識測試 第 14 頁\n原文日期：2026年11月14日\n應給付新臺幣11651元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 14,
+      "text": "文件辨識測試 第 15 頁\n原文日期：2026年11月15日\n應給付新臺幣11778元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 15,
+      "text": "文件辨識測試 第 16 頁\n原文日期：2026年11月16日\n應給付新臺幣11905元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 16,
+      "text": "文件辨識測試 第 17 頁\n原文日期：2026年11月17日\n應給付新臺幣12032元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 17,
+      "text": "文件辨識測試 第 18 頁\n原文日期：2026年11月18日\n應給付新臺幣12159元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 18,
+      "text": "文件辨識測試 第 19 頁\n原文日期：2026年11月19日\n應給付新臺幣12286元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 19,
+      "text": "文件辨識測試 第 20 頁\n原文日期：2026年11月20日\n應給付新臺幣12413元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 20,
+      "text": "文件辨識測試 第 21 頁\n原文日期：2026年11月21日\n應給付新臺幣12540元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 21,
+      "text": "文件辨識測試 第 22 頁\n原文日期：2026年11月22日\n應給付新臺幣12667元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 22,
+      "text": "文件辨識測試 第 23 頁\n原文日期：2026年11月23日\n應給付新臺幣12794元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 23,
+      "text": "文件辨識測試 第 24 頁\n原文日期：2026年11月24日\n應給付新臺幣12921元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 24,
+      "text": "文件辨識測試 第 25 頁\n原文日期：2026年11月25日\n應給付新臺幣13048元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 25,
+      "text": "文件辨識測試 第 26 頁\n原文日期：2026年11月26日\n應給付新臺幣13175元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 26,
+      "text": "文件辨識測試 第 27 頁\n原文日期：2026年11月27日\n應給付新臺幣13302元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 27,
+      "text": "文件辨識測試 第 28 頁\n原文日期：2026年11月28日\n應給付新臺幣13429元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 28,
+      "text": "文件辨識測試 第 29 頁\n原文日期：2026年11月1日\n應給付新臺幣13556元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 29,
+      "text": "文件辨識測試 第 30 頁\n原文日期：2026年11月2日\n應給付新臺幣13683元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 30,
+      "text": "文件辨識測試 第 31 頁\n原文日期：2026年11月3日\n應給付新臺幣13810元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 31,
+      "text": "文件辨識測試 第 32 頁\n原文日期：2026年11月4日\n應給付新臺幣13937元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 32,
+      "text": "文件辨識測試 第 33 頁\n原文日期：2026年11月5日\n應給付新臺幣14064元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 33,
+      "text": "文件辨識測試 第 34 頁\n原文日期：2026年11月6日\n應給付新臺幣14191元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 34,
+      "text": "文件辨識測試 第 35 頁\n原文日期：2026年11月7日\n應給付新臺幣14318元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 35,
+      "text": "文件辨識測試 第 36 頁\n原文日期：2026年11月8日\n應給付新臺幣14445元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 36,
+      "text": "文件辨識測試 第 37 頁\n原文日期：2026年11月9日\n應給付新臺幣14572元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 37,
+      "text": "文件辨識測試 第 38 頁\n原文日期：2026年11月10日\n應給付新臺幣14699元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 38,
+      "text": "文件辨識測試 第 39 頁\n原文日期：2026年11月11日\n應給付新臺幣14826元。\n請核對金額、日期、姓名及否定詞。\nThe appeal shall be dismissed.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    },
+    {
+      "page": 39,
+      "text": "文件辨識測試 第 40 頁\n原文日期：2026年11月12日\n應給付新臺幣14953元。\n請核對金額、日期、姓名及否定詞。\nThis agreement remains in effect.",
+      "type": "synthetic-known-text",
+      "human_reference": false
+    }
+  ],
+  "sha256": "f3f25376b5181a5e39c3b8aebd5de17ab0cc04893ed67796e2232e6061bc1d16"
+}

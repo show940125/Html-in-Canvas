@@ -24,3 +24,9 @@ Technical references: Chrome HTML-in-Canvas documentation (Google code samples: 
 - React, React DOM, DOMPurify, idb and fflate retain their licenses as listed above and in the plugin build.
 
 Some published MIT dependencies omit a standalone license file. For those packages, the build retains the distributed source's copyright header, the standard MIT permission text, and package metadata identifying the license declaration. No third-party code is relicensed under the application's Apache-2.0 license.
+
+## Canvas PDF
+
+Canvas PDF's derivative application is AGPL-3.0-only because it adapts BentoPDF/EditCore. The shared HTML-in-Canvas layer retains Apache-2.0; the existing three extensions retain their licenses. This exception does not relicense the other projects.
+
+Pinned sources, WASM/model hashes, dependency licenses, source adaptations and acceptance boundaries are documented in `Canvas PDF/SOURCES.md`, `Canvas PDF/THIRD_PARTY_NOTICES.md` and `Canvas PDF/ACCEPTANCE.md`. The local distribution includes a corresponding-source archive and third-party notices.
