@@ -39,11 +39,29 @@
 
 Canvas Slides 擁有獨立的資料庫、建置與版本。一般 HTML 的未知腳本採受限匯入，Chrome 157 已通過原生自動驗證，實體 IME、GPU、跨螢幕 DPI、原生資料夾與系統列印仍待實機驗收。
 
-## Canvas PDF：暫停開發
+## 第三個插件：失控 Canvas Runaway（v0.2.0 本機預覽版）
 
-> **開發狀態：暫停（2026-11-08）**。依使用者指示暫停後續開發與驗收，目前保留 0.1.1 本機預覽版；恢復開發等待使用者另行指示。
+網頁區塊在原地聚成雙重曝光的人群：半透明的身體裡疊著原文與圖片，怪獸入侵後，內容帶著身體逃跑。滑鼠引導怪獸，可全部跑光，也可先記住目標網站，讓人群聚成終點畫面，再前往該網址。
 
-現有程式、套件與驗收紀錄保留於本機，詳見 [暫停狀態紀錄](Canvas%20PDF/STATUS.md)。
+[功能、安裝與界線](Canvas%20Runaway/README.md) · [開始使用](Canvas%20Runaway/public/start.html)
+
+採原生 HTML-in-Canvas 紋理與生成的哥斯拉／人物 GIF 剪影，加入地裂與煙塵。支援社群 `div`／`span` 貼文及留言，可見區域最多 160 個內容區塊聚成 16 個角色。建置後有獨立離線預覽；原始碼以本機預覽版狀態入庫，尚未建立正式 Release 或商店發行。
+
+## 第四個插件：Canvas PDF（暫停開發；v0.1.1 本機預覽版）
+
+> **開發狀態：暫停（2026-11-08）**。依使用者指示暫停後續開發與驗收，現有程式、離線包、來源包及驗收紀錄保留；恢復開發等待使用者另行指示。
+
+[暫停狀態紀錄](Canvas%20PDF/STATUS.md)
+
+直接修改 PDF 段落、搬動圖片與圖形，辨識及校正掃描頁，並將譯文放回版面。使用 BentoPDF EditCore／PDFium、HTML-in-Canvas 與隨包提供的 PP-OCRv6 small／medium；預設本機 CPU 多緒，另可選 WebGPU。Chrome 本機翻譯優先，匿名 Gemini RPC 由使用者切換。
+
+![Canvas PDF 實際工作台](docs/media/canvas-pdf-editor.png)
+
+[功能與安裝](Canvas%20PDF/README.md) · [使用指南](Canvas%20PDF/public/GUIDE.html) · [驗收紀錄](Canvas%20PDF/ACCEPTANCE.md) · [來源與適配](Canvas%20PDF/SOURCES.md)
+
+提供編輯版、搜尋版、譯文版、雙語配對頁、專案備份與離線套件。採獨立 AGPL-3.0-only 授權、資料庫與版本；既有三個插件維持原授權。原始碼以暫停時的快照入庫；實體 IME、使用者設定檔及真實文件人工 OCR 金標仍待驗收，尚未建立正式 Release 或商店發行。
+
+[2026-11-08 入庫檢查與版本狀態](docs/repository-snapshot-2026-11-08.md) 記錄本輪提交範圍、驗證及本機產物排除方式。
 
 ## 開發
 
@@ -67,4 +85,4 @@ Chrome 156 需啟用 `canvas-draw-element` 實驗功能。程式依實際 API �
 
 ## 授權
 
-原創程式使用 [Apache-2.0](LICENSE)。依賴及參考素材保留各自授權，見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。本專案為獨立社群應用。
+共用層及既有三個插件的原創程式使用 [Apache-2.0](LICENSE)。Canvas PDF 整合 AGPL 元件，其衍生程式使用獨立的 [AGPL-3.0-only](Canvas%20PDF/LICENSE)。依賴及參考素材保留各自授權，見 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。本專案為獨立社群應用。
