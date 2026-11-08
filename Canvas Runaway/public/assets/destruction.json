@@ -1,0 +1,26 @@
+{
+  "width": 447,
+  "height": 444,
+  "columns": 4,
+  "rows": 2,
+  "frameCount": 8,
+  "durations": [
+    250,
+    250,
+    250,
+    250,
+    250,
+    250,
+    250,
+    250
+  ],
+  "duration": 2000,
+  "baseline": 0.8761261261261262,
+  "bounds": [
+    6,
+    72,
+    445,
+    389
+  ],
+  "sha256": "7c922b260c182fbc2b90dbef976038fba6acc0bb5905e76a873b9086b607cd29"
+}

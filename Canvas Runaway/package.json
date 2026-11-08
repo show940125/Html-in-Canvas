@@ -1,0 +1,17 @@
+{
+  "name": "canvas-runaway",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "npm run check && node scripts/build.mjs",
+    "test": "node --experimental-strip-types --test tests/model.test.ts"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.3.7",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  }
+}

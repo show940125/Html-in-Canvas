@@ -1,0 +1,9 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {validateCapture,safeUrl,phaseAt,groupBlocks} from '../src/model.ts';
+const shot=()=>({version:1,width:1280,height:800,dpr:1,url:'https://example.com/',title:'source',background:'#eee',blocks:[{x:5,y:5,w:200,h:100,text:'文字',color:'#222',font:'system-ui',size:18,kind:'text'}],screenshot:'data:image/png;base64,AAAA',clean:'data:image/png;base64,AAAA',capturedAt:'2026-11-07'});
+test('only normal web destinations are accepted',()=>{assert.equal(safeUrl('https://example.com/a'),'https://example.com/a');for(const url of ['javascript:alert(1)','file:///secret','chrome://settings','https://user:pass@example.com'])assert.throws(()=>safeUrl(url));});
+test('corrupt snapshots are rejected at storage boundary',()=>{for(const change of [{width:NaN},{height:0},{dpr:Infinity},{blocks:new Array(161).fill(shot().blocks[0])},{screenshot:'https://example.com/image.png'},{blocks:[{...shot().blocks[0],text:'x'.repeat(5001)}]}])assert.throws(()=>validateCapture({...shot(),...change}));assert.equal(validateCapture(shot()).blocks[0].text,'文字');});
+test('stored contents remain data, including markup-like text',()=>{const c=shot();c.blocks[0].text='<img onerror=alert(1)>';assert.equal(validateCapture(c).blocks[0].text,c.blocks[0].text);});
+test('choreography reaches an explicit finished state',()=>{assert.equal(phaseAt(0),'察覺異常');assert.equal(phaseAt(7),'全員逃難');assert.equal(phaseAt(15),'演出結束');});
+test('social posts and comments are not dropped at the actor cap',()=>{const blocks=Array.from({length:120},(_,i)=>({...shot().blocks[0],x:(i%4)*300,y:Math.floor(i/4)*25,text:'留言 '+i}));const groups=groupBlocks(blocks,1280,800);assert.ok(groups.length<=16);assert.equal(groups.flatMap(g=>g.regions).length,120);assert.equal(new Set(groups.flatMap(g=>g.regions)).size,120);});

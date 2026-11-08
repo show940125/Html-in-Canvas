@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "失控 · Canvas Runaway",
+  "version": "0.2.0",
+  "description": "網頁聚成雙重曝光的人群，怪獸入侵，文字帶著身體逃跑。",
+  "minimum_chrome_version": "157",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html", "default_title": "讓這個網頁失控" },
+  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'none'" },
+  "web_accessible_resources": [{"resources":["assets/*.png","assets/*.json"],"matches":["http://*/*","https://*/*"]}]
+}
