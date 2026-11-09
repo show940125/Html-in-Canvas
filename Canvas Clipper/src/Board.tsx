@@ -2,7 +2,7 @@ import { Fragment,useEffect,useLayoutEffect,useRef,useState,type PointerEvent as
 import { prepareCanvas,supportsCanvas,syncGeometry,type DrawableCanvas,type DrawableContext } from '../../shared/html-in-canvas/canvas';
 import { sourceLabel,walkImages,type Clip,type Group,type Project } from './model';
 import { useAssetUrl } from './assets';
-import {cardRect,computeDropPreview,applyDrop,type DropPreview} from './layout';
+import {cardRect,groupRect,computeDropPreview,applyDrop,type DropPreview,type Rect} from './layout';
 import {cardAppearance,frameInsets,framePath,contrastingText} from './appearance';
 import {Frame} from './Frame';
 import {GroupGlass} from './GroupGlass';
@@ -10,6 +10,16 @@ import {glassBackdrop} from './glass';
 import {sceneOrder,sceneUnit} from './scene';
 import {useSceneMotion} from './useSceneMotion';
 export const CARD_W=308,CARD_H=374;
+export function fitBoardView(rects:readonly Pick<Rect,'x'|'y'|'width'|'height'>[],width:number,height:number,maximumZoom=1):Project['view']|undefined{
+  if(!rects.length||width<=0||height<=0)return undefined;
+  const left=Math.min(...rects.map(r=>r.x)),top=Math.min(...rects.map(r=>r.y)),right=Math.max(...rects.map(r=>r.x+r.width)),bottom=Math.max(...rects.map(r=>r.y+r.height));
+  const zoom=Math.max(.3,Math.min(2,maximumZoom,(width-48)/(right-left),(height-48)/(bottom-top)));
+  return{zoom,x:width/2-(left+right)/2*zoom,y:height/2-(top+bottom)/2*zoom};
+}
+export function boardViewAtZoom(view:Project['view'],width:number,height:number,zoom:number):Project['view']{
+  const next=Math.max(.3,Math.min(2,zoom)),ratio=next/view.zoom;
+  return{zoom:next,x:width/2-(width/2-view.x)*ratio,y:height/2-(height/2-view.y)*ratio};
+}
 interface Position{id:string;x:number;y:number;}
 interface Props{
   project:Project;selectedIds:string[];activeTags:string[];forceDOM:boolean;
@@ -18,16 +28,19 @@ interface Props{
   onMove:(cards:Position[],groups:Position[],assignments:{id:string;groupId?:string}[])=>void;
   onGroup:(id:string,fields:Partial<Group>)=>void;onLink:(from:string,to:string)=>void;
   onRelationSelect:(id:string)=>void;onMode:(mode:string)=>void;
+  locateRequest?:{ids:string[];nonce:number};onRequestRelation?:(id:string)=>void;
   onDrop:(preview:DropPreview)=>void;onDemo?:()=>void;focusGroupId?:string;traceIds?:string[];onFocusGroup?:(id?:string)=>void;onExportGroup?:(id:string)=>void;motionEnabled?:boolean;diagnostics?:boolean;
 }
 interface Drag{kind:'cards'|'resize'|'group'|'pan'|'link';sourceId?:string;snapshot:Project;pointerId:number;preview?:DropPreview;target?:string;expanded?:string;last?:{x:number;y:number;dx:number;dy:number;alt:boolean};px:number;py:number;cards:Position[];groups:Position[];from?:string;view:Project['view'];}
 interface Motion{cards:Position[];groups:Position[];preview?:DropPreview;link?:{from:string;x:number;y:number};}
 function CardThumbnail({card}:{card:Clip}){const image=walkImages(card.editedDoc)[0],url=useAssetUrl(image?.attrs?.assetId);return url?<img className="card-thumbnail" src={url} alt={String(image?.attrs?.alt||'文章圖片')}/>:image?<div className="card-image-pending">▧ 圖片待載入</div>:null;}
 export function Board(props:Props){
-  const{project,selectedIds,activeTags,forceDOM,onSelect,onOpen,onCard,onView,onMove,onGroup,onLink,onRelationSelect,onMode,onDrop,onDemo,focusGroupId,traceIds=[],onFocusGroup,onExportGroup,motionEnabled=true,diagnostics=false}=props;
+  const{project,selectedIds,activeTags,forceDOM,onSelect,onOpen,onCard,onView,onMove,onGroup,onLink,onRelationSelect,onMode,onDrop,onDemo,focusGroupId,traceIds=[],onFocusGroup,onExportGroup,motionEnabled=true,diagnostics=false,locateRequest,onRequestRelation}=props;
   const root=useRef<HTMLDivElement>(null),canvas=useRef<DrawableCanvas>(null);
   const[failed,setFailed]=useState(''),[view,setView]=useState(project.view),[motion,setMotion]=useState<Motion>({cards:[],groups:[]});
   const[front,setFront]=useState<string[]>([]),[reduced,setReduced]=useState(matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const[resizeDraft,setResizeDraft]=useState<{id:string;width:string;height:string}>(),[resizeError,setResizeError]=useState('');
+  const resizeDialog=useRef<HTMLDialogElement>(null),resizeTrigger=useRef<HTMLElement|null>(null);
   useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)'),change=()=>setReduced(media.matches);media.addEventListener('change',change);return()=>media.removeEventListener('change',change);},[]);
   const hoverTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined),diagnosticOutput=useRef<HTMLOutputElement>(null);
   const native=supportsCanvas()&&!forceDOM&&!failed;
@@ -48,6 +61,9 @@ export function Board(props:Props){
   useLayoutEffect(()=>{const el=root.current;if(!el)return;const observer=new ResizeObserver(([e])=>{const next={width:e.contentRect.width,height:e.contentRect.height},old=viewportSize.current;viewportSize.current=next;if(old&&(old.width!==next.width||old.height!==next.height)){const v={...viewRef.current,x:viewRef.current.x+(next.width-old.width)/2,y:viewRef.current.y+(next.height-old.height)/2};viewRef.current=v;setView(v);onView(v);}});observer.observe(el);return()=>observer.disconnect();},[onView]);
   useLayoutEffect(()=>{if(viewProject.current!==project.id){viewProject.current=project.id;viewportSize.current=undefined;setFront([]);arrivals.current.clear();clearTimeout(hoverTimer.current);const d=drag.current;if(d&&root.current?.hasPointerCapture(d.pointerId))root.current.releasePointerCapture(d.pointerId);drag.current=undefined;setMotion({cards:[],groups:[]});}viewRef.current=project.view;setView(project.view);},[project.id,project.view.x,project.view.y,project.view.zoom]);
   useEffect(()=>onMode(native?'原生 Canvas':failed?'HTML 模式 · Canvas 錯誤':'HTML 模式'),[native,failed,onMode]);
+  useEffect(()=>{if(locateRequest)locateCards(locateRequest.ids);},[locateRequest?.nonce,project.id]);
+  useEffect(()=>{if(!resizeDraft)return;const dialog=resizeDialog.current;if(!dialog)return;dialog.showModal();return()=>{dialog.close();requestAnimationFrame(()=>{if(resizeTrigger.current?.isConnected)resizeTrigger.current.focus({preventScroll:true});});};},[resizeDraft?.id]);
+  useEffect(()=>setResizeDraft(undefined),[project.id]);
   const matches=(c:Clip)=>!activeTags.length||c.tagIds.some(id=>activeTags.includes(id));
   const visibleCard=(c:Clip)=>matches(c)&&!sceneProject.groups.find(g=>g.id===c.groupId)?.collapsed;
   const filtered=sceneProject.cards.filter(visibleCard);
@@ -122,8 +138,9 @@ export function Board(props:Props){
       const dx=(e.clientX-d.px)/d.view.zoom,dy=(e.clientY-d.py)/d.view.zoom;
       lastTap.current=d.kind==='cards'&&Math.abs(dx)+Math.abs(dy)<4?d.sourceId:undefined;
       if(d.kind==='pan')onView(viewRef.current);
-      else if(d.kind==='link'){const w=world(e);const target=[...filtered].sort((a,b)=>(layers.get(b.id)||0)-(layers.get(a.id)||0)).find(c=>{const p=pos(c,'cards');return w.x>=p.x&&w.x<=p.x+(c.width||CARD_W)&&w.y>=p.y&&w.y<=p.y+(c.height||CARD_H);});if(target)onLink(d.from!,target.id);}
+      else if(d.kind==='link'){if(Math.abs(dx)+Math.abs(dy)<4)onRequestRelation?.(d.from!);else{const w=world(e);const target=[...filtered].sort((a,b)=>(layers.get(b.id)||0)-(layers.get(a.id)||0)).find(c=>{const p=pos(c,'cards');return c.id!==d.from&&w.x>=p.x&&w.x<=p.x+(c.width||CARD_W)&&w.y>=p.y&&w.y<=p.y+(c.height||CARD_H);});if(target)onLink(d.from!,target.id);}}
       else if((d.kind==='cards'||d.kind==='resize')&&d.preview){onDrop(d.preview);}
+      else if(d.kind==='resize'&&Math.abs(dx)+Math.abs(dy)<4)openResize(d.sourceId!);
       else if(d.kind==='group'&&Math.abs(dx)+Math.abs(dy)>2){
         const cards=d.cards.map(p=>({...p,x:p.x+dx,y:p.y+dy}));
         const groups=d.groups.map(p=>({...p,x:p.x+dx,y:p.y+dy}));
@@ -134,27 +151,37 @@ export function Board(props:Props){
     setMotion({cards:[],groups:[]});
   }
   useEffect(()=>{const cancel=(e:KeyboardEvent)=>{const d=drag.current;if(e.key!=='Escape'||!d)return;e.preventDefault();drag.current=undefined;clearTimeout(hoverTimer.current);if(root.current?.hasPointerCapture(d.pointerId))root.current.releasePointerCapture(d.pointerId);setView(d.view);setMotion({cards:[],groups:[]});};window.addEventListener('keydown',cancel);return()=>{window.removeEventListener('keydown',cancel);clearTimeout(hoverTimer.current);};},[]);
-  function zoom(delta:number){const next=Math.max(.5,Math.min(2,Math.round((view.zoom+delta)*10)/10));const w=root.current?.clientWidth||600,h=root.current?.clientHeight||500,ratio=next/view.zoom;const v={zoom:next,x:w/2-(w/2-view.x)*ratio,y:h/2-(h/2-view.y)*ratio};setView(v);onView(v);}
-  function locateSelection(){
-    const card=(selectedIds.length?project.cards.filter(c=>selectedIds.includes(c.id)):project.cards)[0],group=project.groups.find(g=>g.id===card?.groupId);
-    if(group?.collapsed)onGroup(group.id,{collapsed:false});
-    const rect=card?cardRect(card):project.groups[0];if(!rect)return;
-    const w=root.current?.clientWidth||900,h=root.current?.clientHeight||600,zoom=Math.max(.5,Math.min(1,(h-48)/rect.height,(w-48)/rect.width));
-    const next={zoom,x:w/2-(rect.x+rect.width/2)*zoom,y:h/2-(rect.y+rect.height/2)*zoom};setView(next);onView(next);
+  function setBoardView(next:Project['view']|undefined){if(!next)return;viewRef.current=next;setView(next);onView(next);}
+  function zoom(delta:number){setBoardView(boardViewAtZoom(viewRef.current,root.current?.clientWidth||600,root.current?.clientHeight||500,Math.round((viewRef.current.zoom+delta)*10)/10));}
+  function locateCards(ids:string[]){
+    const cards=project.cards.filter(c=>ids.includes(c.id));if(!cards.length)return;
+    const groups=new Set(cards.map(c=>c.groupId));project.groups.filter(g=>groups.has(g.id)&&g.collapsed).forEach(g=>onGroup(g.id,{collapsed:false}));
+    setBoardView(fitBoardView(cards.map(cardRect),root.current?.clientWidth||900,root.current?.clientHeight||600,viewRef.current.zoom));
+  }
+  function fitAll(){
+    const cards=project.cards.filter(c=>matches(c)&&!project.groups.find(g=>g.id===c.groupId)?.collapsed);
+    const groups=project.groups.filter(g=>!activeTags.length||project.cards.some(c=>c.groupId===g.id&&matches(c)));
+    setBoardView(fitBoardView([...cards.map(cardRect),...groups.map(groupRect)],root.current?.clientWidth||900,root.current?.clientHeight||600));
+  }
+  function openResize(id:string){const card=project.cards.find(c=>c.id===id);if(!card)return;resizeTrigger.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setResizeError('');setResizeDraft({id,width:String(card.width||CARD_W),height:String(card.height||CARD_H)});}
+  function applySize(e:React.FormEvent){
+    e.preventDefault();if(!resizeDraft)return;const width=Number(resizeDraft.width),height=Number(resizeDraft.height),card=project.cards.find(c=>c.id===resizeDraft.id);
+    if(!Number.isInteger(width)||width<260||width>640||!Number.isInteger(height)||height<240||height>760){setResizeError('寬度請輸入 260–640，高度請輸入 240–760 的整數。');return;}
+    if(!card)return;onDrop(computeDropPreview(project,{ids:[card.id],dx:0,dy:0,pointer:{x:card.x,y:card.y},zoom:viewRef.current.zoom,resize:{width,height}}));setResizeDraft(undefined);
   }
   const sceneStyle=(p:{x:number;y:number})=>native?undefined:{transform:`translate(${view.x+p.x*view.zoom}px,${view.y+p.y*view.zoom}px) scale(${view.zoom})`};
   const groups=sceneProject.groups.filter(g=>!activeTags.length||sceneProject.cards.some(c=>c.groupId===g.id&&matches(c))).map(g=>{
     const p=pos(g,'groups'),members=sceneProject.cards.filter(c=>c.groupId===g.id),internal=project.relations.filter(r=>members.some(c=>c.id===r.from)&&members.some(c=>c.id===r.to)).length;
     return <Fragment key={g.id}><section data-scene-id={g.id} data-group-id={g.id} drawable={native?'':undefined} className={'group-frame '+(g.collapsed?'collapsed':'')} style={{...sceneStyle(p),width:g.width,height:g.height,zIndex:layers.get(g.id),clipPath:`path('${framePath(g.frame||'rounded',g.width,g.height)}')`}} onPointerDown={e=>{if(!(e.target as Element).closest('button'))begin(e,'group',g.id);}}><GroupGlass shape={g.frame} width={g.width} height={g.height} color={g.color}/>{!g.collapsed&&!members.length&&<p className="group-drop-hint">把材料拖進這個主題框</p>}</section>
-      <header data-scene-id={g.id+'-header'} drawable={native?'':undefined} className="group-handle group-topbar" style={{...sceneStyle({x:p.x,y:p.y+(g.frame==='folder'&&!g.collapsed?22:6)}),width:g.width,zIndex:layers.get(g.id+'-header'),paddingLeft:Math.max(20,frameInsets(g.frame||'rounded').left),paddingRight:Math.max(20,frameInsets(g.frame||'rounded').right)}} onPointerDown={e=>begin(e,'group',g.id)} onPointerDownCapture={()=>lift(g.id)}><button className="group-focus" aria-label={`聚焦主題 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onFocusGroup?.(focusGroupId===g.id?undefined:g.id)}>◎</button><span className="group-title">{g.title}</span><small>{members.filter(matches).length}/{members.length}{g.collapsed&&internal?` · ${internal} 條內部關係`:''}</small><button aria-label={`輸出主題圖片 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onExportGroup?.(g.id)}>▧</button><button aria-label={`編輯主題 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onGroup(g.id,{})}>⋯</button><button aria-label={`${g.collapsed?'展開':'收合'}主題 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onGroup(g.id,{collapsed:!g.collapsed})}>{g.collapsed?'＋':'−'}</button></header></Fragment>;
+      <header data-scene-id={g.id+'-header'} drawable={native?'':undefined} className="group-handle group-topbar" style={{...sceneStyle({x:p.x,y:p.y+(g.frame==='folder'&&!g.collapsed?22:6)}),width:g.width,zIndex:layers.get(g.id+'-header'),paddingLeft:Math.max(20,frameInsets(g.frame||'rounded').left),paddingRight:Math.max(20,frameInsets(g.frame||'rounded').right)}} onPointerDown={e=>begin(e,'group',g.id)} onPointerDownCapture={()=>lift(g.id)}><button className="group-focus" aria-label={`聚焦主題 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onFocusGroup?.(focusGroupId===g.id?undefined:g.id)}>◎</button><span className="group-title">{g.title}</span><small>{members.filter(matches).length}/{members.length}{g.collapsed&&internal?` · ${internal} 條內部關係`:''}</small><button aria-label={`輸出主題圖片 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onExportGroup?.(g.id)}>▧</button><button aria-label={`編輯主題 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onGroup(g.id,{})} title="主題設定">⚙</button><button aria-label={`${g.collapsed?'展開':'收合'}主題 ${g.title}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>onGroup(g.id,{collapsed:!g.collapsed})}>{g.collapsed?'＋':'−'}</button></header></Fragment>;
   });
   const cards=sceneProject.cards.map((card,index)=>{
     const p=pos(card,'cards'),visible=visibleCard(card),look=cardAppearance(card,sceneProject.groups),insets=frameInsets(look.frame),inactive=!!((focusGroupId&&card.groupId!==focusGroupId)||(traceIds.length&&!traceIds.includes(card.id))),image=walkImages(card.editedDoc).length>0;
     return <article key={card.id} data-scene-id={card.id} data-card-id={card.id} drawable={native?'':undefined} hidden={!visible} className={`clip-card frame-${look.frame} ${inactive?'focus-muted':''} ${selectedIds.includes(card.id)?'selected':''} ${(motion.cards.some(c=>c.id===card.id)||motion.preview?.assignments.some(c=>c.id===card.id))?'moving':''} ${image?'has-image':''}`} style={{...sceneStyle(p),zIndex:layers.get(card.id),width:card.width||CARD_W,height:card.height||CARD_H,clipPath:`path('${framePath(look.frame,card.width||CARD_W,card.height||CARD_H)}')`,'--material-ink':contrastingText(look.color),'--material-note-bg':contrastingText(look.color)==='#ffffff'?'#00000022':'#ffffff99','--frame-left':insets.left+'px','--frame-right':insets.right+'px','--frame-top':insets.top+'px','--frame-bottom':insets.bottom+'px'} as React.CSSProperties} onPointerDownCapture={()=>lift(card.id)} onPointerDown={e=>{if((e.target as Element).closest('button,input,textarea,select,a,label,[contenteditable=true]'))onSelect(card.id,e.ctrlKey||e.metaKey||e.shiftKey);else begin(e,'cards',card.id);}} onDoubleClick={e=>{if(!(e.target instanceof HTMLTextAreaElement)&&!(e.target instanceof HTMLButtonElement))onOpen(card.id);}}>
-      <Frame shape={look.frame} width={card.width||CARD_W} height={card.height||CARD_H} color={look.color}/><header className="card-handle" onPointerDown={e=>begin(e,'cards',card.id)}><span className="card-kind">{card.kind==='article'?'文章':card.kind==='manual'?'筆記':'摘錄'}</span><div className="card-tag-dots">{card.tagIds.slice(0,4).map(id=>{const t=project.tags.find(t=>t.id===id);return t?<span key={id} style={{background:t.color}} title={t.title}/>:null;})}</div><button className="link-handle" aria-label={`從卡片 ${index+1} 建立關係`} onPointerDown={e=>begin(e,'link',card.id)} title="拖曳到另一張卡片建立關係">↗</button><span className="grip" aria-hidden="true">⠿</span></header>
+      <Frame shape={look.frame} width={card.width||CARD_W} height={card.height||CARD_H} color={look.color}/><header className="card-handle" onPointerDown={e=>begin(e,'cards',card.id)}><span className="card-kind">{card.kind==='article'?'文章':card.kind==='manual'?'筆記':'摘錄'}</span><div className="card-tag-dots">{card.tagIds.slice(0,4).map(id=>{const t=project.tags.find(t=>t.id===id);return t?<span key={id} style={{background:t.color}} title={t.title}/>:null;})}</div><button className="link-handle" aria-label={`從卡片 ${index+1} 建立關係`} onPointerDown={e=>begin(e,'link',card.id)} onClick={e=>{if(e.detail===0)onRequestRelation?.(card.id);}} title="拖曳連結；按 Enter 或空白鍵選擇關係">↗</button><span className="grip" aria-hidden="true">⠿</span></header>
       <div className="card-content"><h2>{card.title}</h2>{image&&<CardThumbnail card={card}/>}<p className="card-excerpt">{card.workingText.slice(0,220)||'圖片材料'}</p><label className="card-note-label">我的筆記<textarea aria-label={`卡片筆記 ${index+1}`} value={card.note} placeholder="留下觀點與待查問題…" maxLength={500000} onChange={e=>onCard(card.id,{note:e.target.value})}/></label></div>
-      <footer className="card-source"><span className="source-dot"/><span>{sourceLabel(card.url)}</span><button onClick={()=>onOpen(card.id)} aria-label={`閱讀卡片 ${index+1}`}>閱讀全文 ↗</button></footer>
-      <button className="card-resize" aria-label={`調整卡片 ${index+1} 尺寸`} onPointerDown={e=>begin(e,'resize',card.id)}>◢</button>
+      <footer className="card-source"><span className="source-dot"/><span>{sourceLabel(card.url)}</span><button onClick={()=>onOpen(card.id)} aria-label={`閱讀卡片 ${index+1}`}>閱讀全文 →</button></footer>
+      <button className="card-resize" aria-label={`調整卡片 ${index+1} 尺寸`} onPointerDown={e=>begin(e,'resize',card.id)} onClick={e=>{if(e.detail===0)openResize(card.id);}} title="拖曳調整，或按 Enter 輸入尺寸">◢</button>
     </article>;
   });
   function endpoint(id:string){const c=sceneProject.cards.find(c=>c.id===id);if(!c||!matches(c))return undefined;const g=sceneProject.groups.find(g=>g.id===c.groupId);if(g?.collapsed){const p=pos(g,'groups');return{id:g.id,x:p.x,y:p.y,width:g.width,height:48};}const p=pos(c,'cards');return{id:c.id,x:p.x,y:p.y,width:c.width||CARD_W,height:c.height||CARD_H};}
@@ -168,5 +195,7 @@ export function Board(props:Props){
     {motion.preview&&<div className="drop-hint" role="status">{motion.preview.insertionHint} · 放開套用，Esc 取消</div>}
     {!project.cards.length&&<div className="empty-board"><span className="empty-mark" aria-hidden="true">＋</span><p className="eyebrow">YOUR READING DESK</p><h2>把材料攤開，讓想法連起來。</h2><p>從網頁收集圖文，並排閱讀、分組與建立關係。<br/>按「新增卡片」開始，或匯入你的舊版備份。</p><button className="button-primary demo-launch" onClick={onDemo}>試用範例專案 ↗</button><span className="empty-caption">閱讀 → 比較 → 連結 → 成稿</span></div>}
     {activeTags.length>0&&project.cards.length>0&&!filtered.length&&<div className="empty-filter">目前標籤沒有可見卡片；主題框可能已收合。</div>}
-  </div><div className="board-bottom">{diagnostics?<output ref={diagnosticOutput} className="technical-output">DOM 模式 · {sceneProject.cards.length} 個文章節點</output>:<span>{failed||'拖曳卡片或主題空白處 · 空白畫布平移 · Ctrl / Shift 多選'}</span>}<div className="zoom-controls"><button aria-label="找回選取材料" disabled={!project.cards.length&&!project.groups.length} onClick={locateSelection}>定位材料</button><button aria-label="縮小" disabled={view.zoom<=.5} onClick={()=>zoom(-.1)}>−</button><output>{Math.round(view.zoom*100)}%</output><button aria-label="放大" disabled={view.zoom>=2} onClick={()=>zoom(.1)}>＋</button><button className="reset-view" onClick={()=>{const v={x:0,y:0,zoom:1};setView(v);onView(v);}}>重設</button></div></div></div>;
+  </div><div className="board-bottom">{diagnostics?<output ref={diagnosticOutput} className="technical-output">DOM 模式 · {sceneProject.cards.length} 個文章節點</output>:<span>{failed||'拖曳卡片或主題空白處 · 空白畫布平移 · Ctrl / Shift 多選'}</span>}<div className="zoom-controls"><button aria-label="符合全部材料" disabled={!project.cards.length&&!project.groups.length} onClick={fitAll}>符合全部</button><button aria-label="找回選取材料" title="符合選取材料" disabled={!selectedIds.length} onClick={()=>locateCards(selectedIds)}>符合選取</button><button aria-label="縮小" disabled={view.zoom<=.3} onClick={()=>zoom(-.1)}>−</button><output>{Math.round(view.zoom*100)}%</output><button aria-label="放大" disabled={view.zoom>=2} onClick={()=>zoom(.1)}>＋</button><button className="reset-view" aria-label="恢復 100%" onClick={()=>setBoardView(boardViewAtZoom(viewRef.current,root.current?.clientWidth||900,root.current?.clientHeight||600,1))}>100%</button></div></div>
+  {resizeDraft&&<dialog ref={resizeDialog} className="app-dialog" aria-labelledby="card-size-title" onCancel={e=>{e.preventDefault();setResizeDraft(undefined);}} onClick={e=>{if(e.target===e.currentTarget)setResizeDraft(undefined);}}><section className="modal"><button className="modal-close" aria-label="關閉卡片尺寸設定" onClick={()=>setResizeDraft(undefined)}>×</button><h2 id="card-size-title">調整卡片尺寸</h2><p>主題框與鄰近材料會沿用拖曳調整的自適應規則，套用後可一次復原。</p><form onSubmit={applySize} noValidate><label>寬度（260–640 px）<input autoFocus type="number" min="260" max="640" step="1" aria-label="卡片寬度" value={resizeDraft.width} onChange={e=>{setResizeError('');setResizeDraft({...resizeDraft,width:e.target.value});}}/></label><label>高度（240–760 px）<input type="number" min="240" max="760" step="1" aria-label="卡片高度" value={resizeDraft.height} onChange={e=>{setResizeError('');setResizeDraft({...resizeDraft,height:e.target.value});}}/></label>{resizeError&&<p className="form-error" role="alert">{resizeError}</p>}<div className="modal-actions"><button className="button-light" type="button" onClick={()=>setResizeDraft(undefined)}>取消</button><button className="button-primary" type="submit">套用尺寸</button></div></form></section></dialog>}
+  </div>;
 }

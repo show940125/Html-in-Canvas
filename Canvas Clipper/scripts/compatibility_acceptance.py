@@ -12,6 +12,11 @@ class Quiet(SimpleHTTPRequestHandler):
 def check(name,passed):
  checks.append(dict(name=name,passed=bool(passed)));print(('PASS ' if passed else 'FAIL ')+name,flush=True)
  if not passed:raise AssertionError(name)
+def content_editor(page):
+ reopen=page.get_by_role('button',name='展開右側欄',exact=True)
+ if reopen.count():reopen.click()
+ page.get_by_role('tab',name='內容',exact=True).click()
+ page.get_by_role('button',name='整理稿',exact=True).click()
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'dist')));Thread(target=server.serve_forever,daemon=True).start()
 try:
  with sync_playwright() as p:
@@ -23,7 +28,7 @@ try:
    page.get_by_role('button',name='主題與介面',exact=True).click();settings=page.get_by_role('dialog',name='主題與介面')
    for label,value in [('紙白','paper'),('森林','forest'),('海藍','ocean'),('暖杏','apricot'),('莓紫','berry'),('石墨','graphite')]:
     settings.get_by_role('button',name=label,exact=True).click();check('palette '+value,page.locator('.app-v3').get_attribute('data-palette')==value)
-   settings.get_by_role('button',name='完成',exact=True).click();page.locator('.card-list-select').first.click();page.get_by_role('textbox',name='我的筆記',exact=True).fill('相容模式的中文筆記');page.locator('.save-state.saved').wait_for();page.reload();page.wait_for_load_state('networkidle');page.locator('.card-list-select').first.click()
+   settings.get_by_role('button',name='完成',exact=True).click();page.locator('.card-list-select').first.click();content_editor(page);page.get_by_role('textbox',name='我的筆記',exact=True).fill('相容模式的中文筆記');page.locator('.save-state.saved').wait_for();page.reload();page.wait_for_load_state('networkidle');page.locator('.card-list-select').first.click();content_editor(page)
    check('HTML note survives reload',page.get_by_role('textbox',name='我的筆記',exact=True).input_value()=='相容模式的中文筆記')
    page.get_by_role('button',name='書本閱讀',exact=False).first.click();page.wait_for_function('()=>!document.querySelector(".book-loading")',timeout=60000);book=page.get_by_role('dialog',name='書本閱讀')
    check('GPU-free book retains measured pagination',book.locator('.book-flat-spread').count()==1 and int(book.get_by_label('閱讀頁碼',exact=True).inner_text().split('/')[-1])>20)

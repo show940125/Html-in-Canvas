@@ -16,6 +16,7 @@ def saved(page):
  page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');page.locator('.save-state.saved').wait_for(state='attached',timeout=15000)
 
 def panel(page,side,opened):
+ if page.locator('.app-v3').get_attribute('data-'+side)==('open' if opened else 'closed'):return
  names={'left':'左側欄','right':'右側欄','top':'上方欄'}
  page.get_by_role('button',name=('展開' if opened else '收起')+names[side],exact=True).first.click()
  page.wait_for_function('([side,value])=>document.querySelector(".app-v3").dataset[side]===value',arg=[side,'open' if opened else 'closed'])
@@ -33,6 +34,7 @@ try:
    check('v3 native desk loads',page.locator('.board-surface').get_attribute('data-mode')=='native')
    page.get_by_role('button',name='主題與介面',exact=True).click();settings=page.get_by_role('dialog',name='主題與介面');settings.get_by_role('button',name='海藍',exact=True).click();settings.get_by_label('明暗模式').select_option('dark');settings.get_by_role('button',name='完成',exact=True).click()
    check('palette and dark theme apply',page.locator('.app-v3').get_attribute('data-palette')=='ocean' and page.locator('.app-v3').get_attribute('data-theme')=='dark')
+   for side in ['left','right','top']:panel(page,side,True)
    for side in ['left','right','top']:panel(page,side,False)
    check('all three panels collapse',all(page.locator('.app-v3').get_attribute('data-'+s)=='closed' for s in ['left','right','top']))
    page.reload();page.wait_for_load_state('networkidle');check('panel and appearance preferences survive reload',all(page.locator('.app-v3').get_attribute('data-'+side)=='closed' for side in ['left','right','top']) and page.locator('.app-v3').get_attribute('data-theme')=='dark')

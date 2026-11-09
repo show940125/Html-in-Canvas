@@ -1,22 +1,27 @@
 import { createClip, validateCapture, type Capture } from './model';
-import { currentProject, updateProject } from './storage';
+import { currentProject, getProject, updateProject } from './storage';
 import { imageAsset, MAX_IMAGE_BYTES } from './assets';
 import { putAsset } from './storage';
 let captureQueue: Promise<unknown> = Promise.resolve();
-async function openWorkspace(id?: string, error?: string) {
+async function openWorkspace(id?: string, error?: string, clipId?: string) {
   const base = chrome.runtime.getURL('index.html');
-  const url = base + (error ? '?error=' + encodeURIComponent(error) : '') + (id ? '#project=' + id : '');
+  const query = new URLSearchParams();
+  if (error) query.set('error', error);
+  if (clipId) query.set('clip', clipId);
+  const url = base + (query.size ? '?' + query.toString() : '') + (id ? '#project=' + encodeURIComponent(id) : '');
   const existing = (await chrome.tabs.query({})).find(t => t.url?.startsWith(base));
   if (existing?.id) { await chrome.tabs.update(existing.id, { active: true, ...(existing.url === url ? {} : { url }) }); if (existing.windowId) await chrome.windows.update(existing.windowId, { focused: true }); }
   else await chrome.tabs.create({ url });
 }
-async function captureToProject(value: unknown) {
+async function captureToProject(value: unknown, projectId?: string, openAfterCapture = true) {
   const capture = validateCapture(value);
   const work = captureQueue.then(async () => {
-    const active = await currentProject();
-    const project = await updateProject(active.id, p => {const card=createClip(capture,p.cards.length);return{...p,cards:[...p.cards,card],outline:{...p.outline,cardIds:[...p.outline.cardIds,card.id]}};});
-    await openWorkspace(project.id);
-    return { ok: true, projectId: project.id };
+    const active = projectId ? await getProject(projectId) : await currentProject();
+    if (!active) throw new Error('找不到目的專案，請重新選擇後再收集。');
+    let clipId = '';
+    const project = await updateProject(active.id, p => {const card=createClip(capture,p.cards.length);clipId=card.id;return{...p,cards:[...p.cards,card],outline:{...p.outline,cardIds:[...p.outline.cardIds,card.id]}};});
+    if (openAfterCapture) await openWorkspace(project.id, undefined, clipId);
+    return { ok: true, projectId: project.id, projectTitle: project.title, clipId };
   });
   captureQueue = work.catch(() => undefined);
   return work;
@@ -46,6 +51,12 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(chrome.runtime.getURL(''))) return;
   const task = async () => {
     if (message?.type === 'OPEN_WORKSPACE') { await openWorkspace((await currentProject()).id); return { ok: true }; }
+    if (message?.type === 'OPEN_CAPTURED_CLIP') {
+      const project = typeof message.projectId === 'string' ? await getProject(message.projectId) : undefined;
+      if (!project || typeof message.clipId !== 'string' || !project.cards.some(card => card.id === message.clipId)) throw new Error('找不到這份材料，請開啟整理台確認。');
+      await openWorkspace(project.id, undefined, message.clipId);
+      return { ok: true };
+    }
     if (message?.type === 'FETCH_IMAGE') {
       const url=typeof message.url==='string'?message.url:'';
       if(!/^https?:\/\//i.test(url))throw new Error('圖片網址無效。');
@@ -60,6 +71,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       const asset=await imageAsset(blob,url);await putAsset(asset);return{ok:true,asset:{id:asset.id,width:asset.width,height:asset.height}};
     }
     if (message?.type === 'CAPTURE_ARTICLE') {
+      if (message.projectId !== undefined && (typeof message.projectId !== 'string' || !message.projectId || !await getProject(message.projectId))) throw new Error('找不到目的專案，請重新選擇後再收集。');
       const id = message.tabId;
       if (!Number.isInteger(id)) throw new Error('找不到來源分頁。');
       const tab = await chrome.tabs.get(id);
@@ -73,7 +85,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       } });
       const result = results[0]?.result;
       if (!result?.ok) throw new Error(result?.error || '無法讀取正文，請改用右鍵摘錄。');
-      return captureToProject(result.capture);
+      return captureToProject(result.capture, message.projectId, message.openAfterCapture !== false);
     }
     throw new Error('未知的操作。');
   };
