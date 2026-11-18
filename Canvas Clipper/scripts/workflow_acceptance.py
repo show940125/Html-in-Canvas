@@ -191,7 +191,16 @@ def exercise(page, base, mode):
     button('關閉閱讀').click()
     page.get_by_role('button',name='書本閱讀',exact=False).first.click()
     dialog.get_by_role('heading',name='排頁遇到問題').wait_for()
-    page.evaluate('() => { window.restoreBookDecode(); }')
+    # Keep failing until the user's retry action. A resize can otherwise re-run
+    # preparation after restoring decode but before Playwright clicks the button.
+    dialog.evaluate("""el => {
+      const restoreOnRetry = (event) => {
+        if (event.target.closest('button')?.textContent.trim() !== '重試排頁') return;
+        window.restoreBookDecode();
+        el.removeEventListener('click', restoreOnRetry, true);
+      };
+      el.addEventListener('click', restoreOnRetry, true);
+    }""")
     button('重試排頁').click()
     wait_for_book(page)
     expect('successful retry uses the same saved anchor', current()['readingProgress']==saved)

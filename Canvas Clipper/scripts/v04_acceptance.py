@@ -19,7 +19,19 @@ def data(page):
 def point(page,loc,dx=20,dy=15):
  box=loc.bounding_box();page.mouse.move(box['x']+dx,box['y']+dy);return box
 def sample_panel(page,selector,measure):
- page.evaluate('''([selector,measure])=>{window.panelSamples=[];const start=performance.now();function sample(){const e=document.querySelector(selector);window.panelSamples.push(measure==='column'?parseFloat(getComputedStyle(e).gridTemplateColumns):e.getBoundingClientRect().height);if(performance.now()-start<600)requestAnimationFrame(sample)}requestAnimationFrame(sample)}''',arg=[selector,measure])
+ trigger='收起左側欄' if measure=='column' else '收起上方欄'
+ page.get_by_role('button',name=trigger,exact=True).evaluate('''(button,[selector,measure])=>{
+   window.panelSamples=[];
+   button.addEventListener('click',()=>{
+     const start=performance.now();
+     function sample(){
+       const e=document.querySelector(selector);
+       window.panelSamples.push(measure==='column'?parseFloat(getComputedStyle(e).gridTemplateColumns):e.getBoundingClientRect().height);
+       if(performance.now()-start<600)requestAnimationFrame(sample);
+     }
+     requestAnimationFrame(sample);
+   },{once:true});
+ }''',[selector,measure])
 fixture=json.loads((ROOT/'tests/fixtures/acceptance-fixture.json').read_text(encoding='utf-8'));project=fixture['project'];project['cards']=project['cards'][:3];project['view']={'x':0,'y':0,'zoom':1}
 for i,c in enumerate(project['cards']):
  c['x']=[72,524,876][i];c['y']=[120,120,-24][i];c['title']=['主題 A 的閱讀材料','主題 B 的閱讀材料','頂端被遮住也能拖曳'][i];c['tagIds']=[]
@@ -36,10 +48,10 @@ try:
     try:
      if mode=='dom':page.add_init_script("Object.defineProperty(CanvasRenderingContext2D.prototype,'drawElementImage',{value:undefined})")
      page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');restore_project(page,path);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===3');settle(page)
-     page.get_by_role('button',name='關閉提示',exact=True).click();settle(page);groupA,groupB=[g['id'] for g in data(page)['groups']]
+     page.get_by_role('button',name='展開右側欄',exact=True).click();settle(page);groupA,groupB=[g['id'] for g in data(page)['groups']]
      check(mode+' correct renderer',page.locator('.board-surface').get_attribute('data-mode')==mode)
      check(mode+' compact upper workspace',page.locator('.board-surface').bounding_box()['y']<195,page.locator('.board-surface').bounding_box())
-     check(mode+' collapse controls belong to their own panels',page.locator('.sidebar').get_by_role('button',name='收起左側欄').count()==1 and page.locator('.editor-panel').get_by_role('button',name='收起右側欄').count()==1 and page.locator('.workspace-heading').get_by_role('button',name='收起上方欄').count()==1)
+     check(mode+' collapse controls belong to their own panels',page.locator('.sidebar').get_by_role('button',name='收起左側欄').count()==1 and page.locator('.editor-panel').get_by_role('button',name='收起右側欄').count()==1 and page.locator('.topbar').get_by_role('button',name='收起上方欄').count()==1)
      check(mode+' default card type is larger',page.locator('.card-content h2').first.evaluate('e=>parseFloat(getComputedStyle(e).fontSize)')>=18)
      page.screenshot(path=str(OUT/(mode+'-desktop.png')))
      original=page.locator('.sidebar').bounding_box()['width'];sample_panel(page,'.app-v3','column');page.get_by_role('button',name='收起左側欄',exact=True).click();page.wait_for_timeout(650);samples=page.evaluate('window.panelSamples');check(mode+' panel moves through intermediate layout',any(44<w<original for w in samples),samples);settle(page);page.get_by_role('button',name='展開左側欄',exact=True).click();settle(page)
