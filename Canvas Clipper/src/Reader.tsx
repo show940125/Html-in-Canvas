@@ -3,8 +3,9 @@ import { InteractiveSurface } from './InteractiveSurface';
 import { RichContent,RichEditor } from './RichContent';
 import { docText,sourceLabel,type Clip,type Project,type RichDoc } from './model';
 import type {DrawableCanvas} from '../../shared/html-in-canvas/canvas';
-interface Props{project:Project;ids:string[];origin?:DOMRect;forceDOM:boolean;motion?:boolean;onClose:()=>void;onCard:(id:string,fields:Partial<Clip>)=>void;onBook?:(id:string)=>void;}
-export function Reader({project,ids,origin,forceDOM,motion=true,onClose,onCard,onBook}:Props){
+import type {ReadingAnchor} from './BookReader';
+interface Props{project:Project;ids:string[];origin?:DOMRect;forceDOM:boolean;motion?:boolean;resume?:ReadingAnchor;onClose:()=>void;onCard:(id:string,fields:Partial<Clip>)=>void;onBook?:(id:string)=>void;}
+export function Reader({project,ids,origin,forceDOM,motion=true,resume,onClose,onCard,onBook}:Props){
   const dialog=useRef<HTMLDialogElement>(null),panel=useRef<HTMLDivElement>(null);
   const[selected,setSelected]=useState(ids),[editing,setEditing]=useState(false),[original,setOriginal]=useState(false);
   const animation=useRef<Animation|undefined>(undefined);
@@ -13,7 +14,33 @@ export function Reader({project,ids,origin,forceDOM,motion=true,onClose,onCard,o
     const d=dialog.current,p=panel.current;if(!d||!p)return;d.showModal();
     let disposed=false,frame=0;const listeners:Array<()=>void>=[];
     p.inert=true;p.dataset.transition='opening';p.setAttribute('aria-busy','true');
-    const ready=()=>{if(!disposed){p.inert=false;p.dataset.transition='idle';p.removeAttribute('aria-busy');}};
+    const ready=()=>{
+      if(disposed)return;
+      p.inert=false;
+      p.dataset.transition='idle';
+      p.removeAttribute('aria-busy');
+      if(!resume)return;
+      const scroller=p.querySelector<HTMLElement>('.reading-scroll');
+      const block=scroller?.querySelector('.rich-content')?.children[resume.nodePath[0]];
+      if(!scroller||!block)return;
+      const walker=document.createTreeWalker(block,NodeFilter.SHOW_TEXT);
+      let remaining=resume.offset;
+      let target=block.getBoundingClientRect();
+      for(let node=walker.nextNode();node;node=walker.nextNode()){
+        const length=node.textContent?.length??0;
+        if(remaining<length){
+          const range=document.createRange();
+          range.setStart(node,remaining);range.setEnd(node,remaining+1);
+          target=range.getBoundingClientRect();
+          break;
+        }
+        remaining-=length;
+      }
+      scroller.scrollTop+=target.top-scroller.getBoundingClientRect().top-28;
+      scroller.focus({preventScroll:true});
+      scroller.dataset.resumed='true';
+      (scroller.closest('canvas') as DrawableCanvas|null)?.requestPaint?.();
+    };
     // A compositor transform does not resize the Canvas. Repaint after the
     // animation settles so native hit geometry uses the final dialog origin.
     const refreshGeometry=()=>{frame=requestAnimationFrame(()=>{

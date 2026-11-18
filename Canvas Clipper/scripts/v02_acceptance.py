@@ -1,4 +1,4 @@
-from browser_support import chrome_launch_options
+from browser_support import chrome_launch_options,restore_project,open_backup_dialog
 """End-to-end acceptance of the v0.2 reading desk in isolated Chrome 156."""
 from pathlib import Path
 from functools import partial
@@ -33,7 +33,7 @@ try:
    page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle')
    check('v0.2 native board loads',page.locator('.board-surface').get_attribute('data-mode')=='native')
    fixture=ROOT/'tests'/'fixtures'/'acceptance-fixture.json'
-   page.locator('input[accept^=".json"]').set_input_files(fixture)
+   restore_project(page,fixture)
    page.wait_for_function('() => document.querySelectorAll(".clip-card").length===20')
    saved(page)
    check('v0.1 JSON imports all twenty cards',page.locator('.clip-card').count()==20)
@@ -108,14 +108,14 @@ try:
    page.get_by_role('button',name='復原操作',exact=True).click();saved(page)
    page.screenshot(path=str(OUT/'reading-desk.png'))
    # Verify grouped data, original content and image all survive a ZIP roundtrip.
-   page.get_by_role('button',name='備份 / 匯入',exact=True).click()
+   open_backup_dialog(page)
    with page.expect_download() as download:page.get_by_role('button',name='下載目前專案 ZIP',exact=True).click()
    backup=OUT/'v02-project.zip';download.value.save_as(backup)
    with zipfile.ZipFile(backup) as z:
     manifest=json.loads(z.read('manifest.json'))
     check('ZIP includes image bytes and complete graph data',len([n for n in z.namelist() if n.startswith('assets/')])==1 and len(manifest['projects'][0]['groups'])==1 and len(manifest['projects'][0]['tags'])==2 and len(manifest['projects'][0]['relations'])==1)
    page.get_by_role('button',name='關閉對話框',exact=True).click()
-   page.locator('input[accept^=".json"]').set_input_files(backup)
+   restore_project(page,backup)
    page.wait_for_function('() => document.querySelectorAll(".project-list button").length===3')
    saved(page)
    restored=project_data(page)

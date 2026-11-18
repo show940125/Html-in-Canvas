@@ -1,5 +1,5 @@
 """Native/DOM regression evidence for panel, drag, stacking and glass refinement."""
-from browser_support import chrome_launch_options,software_args
+from browser_support import chrome_launch_options,software_args,restore_project
 from pathlib import Path
 from functools import partial
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
@@ -35,7 +35,7 @@ try:
     context=browser.new_context(viewport={'width':1680,'height':1100},device_scale_factor=1.5 if mode=='native' else 1,reduced_motion='no-preference');page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
     try:
      if mode=='dom':page.add_init_script("Object.defineProperty(CanvasRenderingContext2D.prototype,'drawElementImage',{value:undefined})")
-     page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.locator('input[accept^=".json"]').set_input_files(path);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===3');settle(page)
+     page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');restore_project(page,path);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===3');settle(page)
      page.get_by_role('button',name='關閉提示',exact=True).click();settle(page);groupA,groupB=[g['id'] for g in data(page)['groups']]
      check(mode+' correct renderer',page.locator('.board-surface').get_attribute('data-mode')==mode)
      check(mode+' compact upper workspace',page.locator('.board-surface').bounding_box()['y']<195,page.locator('.board-surface').bounding_box())

@@ -1,4 +1,4 @@
-from browser_support import chrome_launch_options,software_args
+from browser_support import chrome_launch_options,software_args,restore_project,wait_for_book
 """20 materials / six rasters / 20 edges; native drag latency and 150% DPI."""
 from pathlib import Path
 from functools import partial
@@ -31,7 +31,7 @@ try:
  with sync_playwright() as p:
   browser=p.chromium.launch(**chrome_launch_options(),headless=True,args=['--enable-features=CanvasDrawElement']+software_args())
   try:
-   context=browser.new_context(viewport={'width':1920,'height':2000});page=context.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.locator('input[accept^=".json"]').set_input_files(target);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');page.locator('.save-state.saved').wait_for();page.wait_for_timeout(400)
+   context=browser.new_context(viewport={'width':1920,'height':2000});page=context.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');restore_project(page,target);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');page.locator('.save-state.saved').wait_for();page.wait_for_timeout(400)
    check('full workload loads in native Canvas',page.locator('.board-surface').get_attribute('data-mode')=='native' and page.locator('.relation').count()==20 and page.locator('.card-thumbnail').count()==6)
    dims=page.locator('.clip-card').evaluate_all('(cards)=>cards.map(c=>{const r=c.getBoundingClientRect();return {x:r.x,y:r.y,bottom:r.bottom,right:r.right}})')
    check('all twenty materials are inside viewport',all(0<=r['x'] and r['right']<=1920 and 0<=r['y'] and r['bottom']<=2000 for r in dims),dims[-1])
@@ -42,12 +42,12 @@ try:
    times=page.evaluate('window.paintTimes');stats['effectivePaintFps']=round((len(times)-1)*1000/(times[-1]-times[0]),2)
    check('native drag event-to-paint p95 under 100ms',len(samples)>=20 and stats['p95Ms']<100,stats)
    page.screenshot(path=str(OUT/'workload-native.png'));context.close()
-   context=browser.new_context(viewport={'width':1680,'height':1100},device_scale_factor=1.5,reduced_motion='reduce');page=context.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');page.locator('input[accept^=".json"]').set_input_files(target);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');page.locator('.save-state.saved').wait_for()
+   context=browser.new_context(viewport={'width':1680,'height':1100},device_scale_factor=1.5,reduced_motion='reduce');page=context.new_page();page.goto(f'http://127.0.0.1:{server.server_port}/index.html');page.wait_for_load_state('networkidle');restore_project(page,target);page.wait_for_function('()=>document.querySelectorAll(".clip-card").length===20');page.locator('.save-state.saved').wait_for()
    size=page.locator('.native-canvas').evaluate('(c)=>({width:c.width,css:c.clientWidth,dpr:devicePixelRatio})')
    check('150-percent DPI native backing size is correct',abs(size['width']/size['css']-1.5)<.01,size)
    note=page.get_by_role('textbox',name='卡片筆記 1',exact=True);r=note.bounding_box();page.mouse.click(r['x']+r['width']/2,r['y']+r['height']/2);page.keyboard.press('Control+A');page.keyboard.insert_text('150% 原生命中與中文輸入');page.locator('.save-state.saved').wait_for()
    check('150-percent DPI geometry maps native note input',note.input_value()=='150% 原生命中與中文輸入')
-   page.get_by_role('button',name='書本閱讀',exact=False).first.click();page.wait_for_function('()=>!document.querySelector(".book-loading")',timeout=60000);page.wait_for_function('()=>!!document.querySelector(".book-canvas[data-renderer]")')
+   page.get_by_role('button',name='書本閱讀',exact=False).first.click();wait_for_book(page);page.wait_for_function('()=>!!document.querySelector(".book-canvas[data-renderer]")')
    check('150-percent DPI GPU book renders live HTML',page.locator('.book-canvas').evaluate('(c)=>Math.abs(c.width/c.clientWidth-1.5)<.01'))
    page.screenshot(path=str(OUT/'gpu-150-percent.png'));context.close()
   finally:browser.close()

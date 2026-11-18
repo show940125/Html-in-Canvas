@@ -14,3 +14,26 @@ def synthetic_png(seed=0,width=320,height=140):
 
 def software_args():
  return ['--enable-unsafe-swiftshader','--use-angle=swiftshader'] if os.environ.get('CI') else []
+
+def open_backup_dialog(page):
+ if page.locator('dialog[open] .backup-import').count():
+  return
+ export = page.get_by_role('button',name='輸出與備份',exact=True)
+ if export.is_visible():
+  export.click()
+  page.get_by_role('button',name='完整備份 / 匯入',exact=False).click()
+ else:
+  page.locator('.compact-actions summary').click()
+  page.get_by_role('button',name='備份 / 匯入',exact=True).click()
+
+def choose_backup_file(page, file):
+ open_backup_dialog(page)
+ page.locator('dialog[open] .backup-import input[type=file]').set_input_files(file)
+
+def restore_project(page, file):
+ choose_backup_file(page,file)
+ page.get_by_role('button',name='開啟匯入專案',exact=True).click()
+ page.locator('dialog[open] .backup-import').wait_for(state='hidden')
+
+def wait_for_book(page, timeout=60000):
+ page.locator('.book-shell[data-book-state="ready"]').wait_for(timeout=timeout)

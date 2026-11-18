@@ -4,4 +4,5 @@ import './styles.css';
 import './v3.css';
 import './refinement.css';
 import './workbench.css';
+import './workflow.css';
 createRoot(document.getElementById('root')!).render(<App />);

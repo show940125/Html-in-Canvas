@@ -8,11 +8,11 @@
 
 收集網頁圖文、並排閱讀、主題分類、標籤、關係連線、完整本機備份及可搜尋 PDF。
 
-**Canvas Clipper v0.5.0**：精簡閱讀工作台，新增收集目的專案、完成後定位新材料、全文與筆記搜尋、內容／整理／外觀分區、符合全部／選取，以及鍵盤連線和尺寸設定。主題右上角 ⚙ 保留完整框型、配色與文章樣式繼承。
+**Canvas Clipper v0.6.0** 加入書本排頁復原、備份拖放、空白專案的收集引導，以及可辨識同名材料的搜尋。主題右上角 ⚙ 可設定框型、配色與文章樣式繼承。
 
 ![Canvas Clipper v0.5 閱讀工作台](docs/media/canvas-clipper-v05.png)
 
-[下載 v0.5.0](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-clipper-v0.5.0) · [使用指南](Canvas%20Clipper/GUIDE.html) · [v0.5 更新與後續候選](docs/UX_REFINEMENT.md) · [技術架構](docs/architecture.md) · [v0.3 操作影片](docs/media/canvas-clipper-v03.mp4)
+[下載 v0.6.0](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-clipper-v0.6.0) · [使用指南](Canvas%20Clipper/GUIDE.html) · [UX 更新與後續候選](docs/UX_REFINEMENT.md) · [技術架構](docs/architecture.md) · [v0.3 操作影片](docs/media/canvas-clipper-v03.mp4)
 
 - **磁吸自適應**：放下前預覽橫向／縱向插入，主題伸縮、周邊局部讓位，整次變更一步復原。
 - **自己的工作區**：三區收合、六組主題色、深淺模式、六種框型及可調卡片尺寸。
@@ -20,7 +20,7 @@
 - **完整輸出**：含關係線的 PNG／JPEG 組圖、可搜尋 PDF、含原始圖片和閱讀位置的 ZIP v3。
 - **實際技術細節**：真實 DOM、中文輸入、互動幾何、HTML 紋理、可開關的技術檢視與獨立範例。
 
-空白閱讀桌可按「試用範例專案」建立獨立合成示例。原文與編輯稿分別保存，資料留在本機。
+空白閱讀桌可收集整篇、摘錄一段、新增筆記，或按「試用範例專案」建立獨立合成示例。原文與編輯稿分別保存，資料留在本機。
 
 - `Canvas Clipper/`：插件原始碼、測試與建置工具。
 - `shared/`：通用能力探測、繪製及互動座標相容層。

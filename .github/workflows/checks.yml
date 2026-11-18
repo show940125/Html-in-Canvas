@@ -48,6 +48,8 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Reading workbench native and HTML UX
         run: python "Canvas Clipper/scripts/workbench_acceptance.py"
+      - name: Recovery, import, search and onboarding
+        run: python "Canvas Clipper/scripts/workflow_acceptance.py"
       - name: Native Canvas and WebGL
         run: python "Canvas Clipper/scripts/v03_acceptance.py"
       - name: HTML compatibility without Canvas or GPU
@@ -59,3 +61,4 @@ jobs:
           path: |
             Canvas Clipper/output/v03
             Canvas Clipper/output/v05
+            Canvas Clipper/output/v06

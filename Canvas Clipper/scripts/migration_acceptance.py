@@ -1,4 +1,4 @@
-from browser_support import chrome_launch_options
+from browser_support import chrome_launch_options,restore_project,choose_backup_file,open_backup_dialog
 """Isolated old/new extension migration, atomic restore failures and folder writer."""
 from pathlib import Path
 import json,traceback,uuid,zipfile,struct,shutil,os
@@ -37,13 +37,13 @@ try:
    check('bridge leaves original database byte-equivalent as JSON',before==rows(old))
    new_id=cdp.send('Extensions.loadUnpacked',{'path':str(ROOT/'dist')})['id']
    page=context.new_page();page.goto(f'chrome-extension://{new_id}/index.html');page.wait_for_load_state('networkidle')
-   page.locator('input[accept^=".json"]').set_input_files(exported)
+   restore_project(page,exported)
    page.wait_for_function('()=>document.querySelectorAll(".project-list button").length===3');wait_saved(page)
    imported=[r for r in rows(page) if r['cards']]
    check('new extension restores all legacy projects',len(imported)==2 and sum(len(p['cards']) for p in imported)==21)
    check('migration preserves notes and coordinates',any(c['note']=='兩個專案都必須保留。' for r in imported for c in r['cards']) and all(r['cards'][0]['x']==48 for r in imported))
    check('new imports preserve old source database',before==rows(old))
-   page.get_by_role('button',name='備份 / 匯入',exact=True).click()
+   open_backup_dialog(page)
    with page.expect_download() as download:page.get_by_role('button',name='下載全部專案 ZIP',exact=True).click()
    all_zip=OUT/'all-projects.zip';download.value.save_as(all_zip)
    with zipfile.ZipFile(all_zip) as z:manifest=json.loads(z.read('manifest.json'))
@@ -61,20 +61,20 @@ try:
    # Validate every project before writing any of them.
    broken=json.loads(json.dumps(manifest));broken['projects'][1]['cards'][0]['x']='broken'
    with zipfile.ZipFile(bad,'w') as z:z.writestr('manifest.json',json.dumps(broken))
-   page.locator('input[accept^=".json"]').set_input_files(bad);page.get_by_role('alert').wait_for()
+   choose_backup_file(page,bad);page.get_by_role('alert').wait_for()
    check('invalid workspace restore writes no partial projects',len(rows(page))==count,page.get_by_role('alert').inner_text())
-   page.get_by_role('button',name='關閉提示').click()
+   page.get_by_role('button',name='關閉對話框',exact=True).click()
    image_manifest=json.loads(json.dumps(manifest));image_manifest['assets']=[dict(id='a'*64,mime='image/png',width=320,height=140,sourceUrl='',createdAt='2026-11-01T00:00:00Z')];image_manifest['projects'][1]['cards'][0]['editedDoc']['content'].append({'type':'image','attrs':{'assetId':'a'*64,'width':320,'status':'ready'}});image_manifest=json.dumps(image_manifest)
    with zipfile.ZipFile(bad,'w') as z:z.writestr('manifest.json',image_manifest)
-   page.locator('input[accept^=".json"]').set_input_files(bad);page.get_by_role('alert').wait_for()
+   choose_backup_file(page,bad);page.get_by_role('alert').wait_for()
    check('missing-image backup fails without partial writes',len(rows(page))==count and '圖片' in page.get_by_role('alert').inner_text())
-   page.get_by_role('button',name='關閉提示').click()
+   page.get_by_role('button',name='關閉對話框',exact=True).click()
    with zipfile.ZipFile(bad,'w') as z:z.writestr('../outside.txt','forbidden')
-   page.locator('input[accept^=".json"]').set_input_files(bad);page.get_by_role('alert').wait_for()
+   choose_backup_file(page,bad);page.get_by_role('alert').wait_for()
    check('unexpected ZIP paths are rejected',len(rows(page))==count and '路徑' in page.get_by_role('alert').inner_text())
-   page.get_by_role('button',name='關閉提示').click()
+   page.get_by_role('button',name='關閉對話框',exact=True).click()
    huge=OUT/'huge.png';huge.write_bytes(b'\x89PNG\r\n\x1a\n'+struct.pack('!I',13)+b'IHDR'+struct.pack('!II',12000,10000))
-   with page.expect_file_chooser() as chooser:page.get_by_role('button',name='▧ 圖片',exact=True).click()
+   with page.expect_file_chooser() as chooser:page.get_by_role('button',name='圖片',exact=True).click()
    chooser.value.set_files(huge);page.get_by_role('alert').wait_for()
    check('oversized raster rejected before decode','2400 萬' in page.get_by_role('alert').inner_text())
   finally:context.close()
