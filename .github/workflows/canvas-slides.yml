@@ -43,6 +43,8 @@ jobs:
         run: node examples/vitamin-c-style-a/build.mjs
       - name: Color, print and sequential playback fidelity
         run: python "Canvas Slides/scripts/fidelity_acceptance.py"
+      - name: Workbench recovery and cross-tab editing
+        run: python "Canvas Slides/scripts/workbench_acceptance.py"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

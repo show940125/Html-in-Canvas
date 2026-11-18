@@ -29,7 +29,7 @@ export function sanitizeDeck(deck:Deck):Deck {
  const resolver=(url:string)=>url.startsWith('#')||/^data:(image|font|audio|video)\//i.test(url)?url:'';
  return {...deck,rootAttrs:Object.fromEntries(Object.entries(deck.rootAttrs).filter(([k,v])=>/^(lang|dir|class|data-[\w-]+)$/.test(k)&&typeof v==='string')),rootStyle:normalizeCss(typeof deck.rootStyle==='string'?deck.rootStyle:'',resolver),css:normalizeCss(deck.css,resolver),bodyStyle:normalizeCss(deck.bodyStyle,resolver),slides:deck.slides.map(s=>({...s,html:safeHtml(s.html)}))};
 }
-export function importHtml(source:string,files=new Map<string,Uint8Array>(),entry='index.html',selector?:string):Deck {
+export function importHtml(source:string,files=new Map<string,Uint8Array>(),entry='index.html',selector?:string,images?:Set<string>):Deck {
  if(source.length>16*1024*1024)throw new Error('HTML 超過 16 MiB。');
  const doc=new DOMParser().parseFromString(source,'text/html');const warnings:string[]=[];
  const resolveUrl=(url:string,base=entry):string=>{
@@ -64,7 +64,16 @@ export function importHtml(source:string,files=new Map<string,Uint8Array>(),entr
   const oldNote=notes.find(n=>n?.id===sourceEl.getAttribute('data-slide-id'));
   const note:Note={...emptyNote(el.querySelector('h1,h2,h3')?.textContent?.trim()||`投影片 ${i+1}`),...(oldNote&&typeof oldNote==='object'?oldNote:{})};
   note.title=String(note.title||'');note.purpose=String(note.purpose||'');note.transition=String(note.transition||'');note.talk=Array.isArray(note.talk)?note.talk.map(String):[];
-  for(const image of el.querySelectorAll('img,video,audio,source')){for(const key of ['src','poster'])if(image.hasAttribute(key))image.setAttribute(key,resolveUrl(image.getAttribute(key)!));image.removeAttribute('srcset');}
+  for(const media of el.querySelectorAll('img,video,audio,source')){
+   for(const key of ['src','poster']){
+    const reference=media.getAttribute(key);
+    if(reference===null)continue;
+    const resolved=resolveUrl(reference);
+    if((media.tagName==='IMG'||key==='poster')&&resolved!==placeholder&&/^data:image\//i.test(resolved))images?.add(reference);
+    media.setAttribute(key,resolved);
+   }
+   media.removeAttribute('srcset');
+  }
   for(const node of [el,...el.querySelectorAll('[style]')])if(node.hasAttribute('style'))node.setAttribute('style',normalizeCss(node.getAttribute('style')!,url=>resolveUrl(url)));
   return{id,html:safeHtml(el.outerHTML),note,hidden:false};
  });
@@ -72,11 +81,49 @@ export function importHtml(source:string,files=new Map<string,Uint8Array>(),entr
  return sanitizeDeck({schema:1,id:newId(),title:doc.title||entry.split('/').pop()?.replace(/\.html?$/i,'')||'匯入簡報',family,width:viewport?.[0]||1280,height:viewport?.[1]||720,css,rootAttrs:Object.fromEntries([...doc.documentElement.attributes].filter(a=>/^(lang|dir|class|data-[\w-]+)$/.test(a.name)).map(a=>[a.name,a.value])),rootStyle:normalizeCss(doc.documentElement.getAttribute('style')||'',url=>resolveUrl(url)),bodyClass:doc.body.className,bodyStyle:normalizeCss(doc.body.getAttribute('style')||'',url=>resolveUrl(url)),slides,original:source,warnings:[...new Set(warnings)],updated:Date.now()});
 }
 export function readZip(bytes:Uint8Array){let total=0;return unzipSync(bytes,{filter(file){safePath(file.name.replace(/\/$/,''));total+=file.originalSize;if(total>MAX_TOTAL||file.originalSize>64*1024*1024)throw new Error('ZIP 解壓後超過大小限制。');return!file.name.endsWith('/');}});}
-export async function readFiles(files:File[]):Promise<{deck?:Deck;source?:string;files:Map<string,Uint8Array>;entry?:string;entries?:string[]}> {
- let total=0;const entries=new Map<string,Uint8Array>();
- for(const file of files){total+=file.size;if(total>MAX_TOTAL)throw new Error('匯入總量超過 250 MiB。');const bytes=new Uint8Array(await file.arrayBuffer());if(/\.zip$/i.test(file.name)){for(const [name,data]of Object.entries(readZip(bytes)))entries.set(name,data);}else entries.set(safePath((file as any).webkitRelativePath||file.name),bytes);}
+export type AssetMap=Map<string,Uint8Array>;
+
+function addAsset(files:AssetMap,name:string,bytes:Uint8Array){
+ const previous=files.get(name);
+ if(previous&&(previous.byteLength!==bytes.byteLength||!previous.every((value,i)=>value===bytes[i])))
+  throw new Error(`同一路徑有不同的檔案：${name}。請重新選擇素材。`);
+ if(!previous)files.set(name,bytes);
+}
+function checkAssetTotal(files:AssetMap){
+ const total=[...new Set(files.values())].reduce((n,v)=>n+v.byteLength,0);
+ if(total>MAX_TOTAL)throw new Error('匯入素材解壓總量超過 250 MiB。');
+}
+export async function readAssets(files:File[]){
+ let total=0,expanded=0;
+ const entries:AssetMap=new Map();
+ for(const file of files){
+  total+=file.size;
+  if(total>MAX_TOTAL)throw new Error('匯入總量超過 250 MiB。');
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  const items=/\.zip$/i.test(file.name)?Object.entries(readZip(bytes)):[[safePath(file.webkitRelativePath||file.name),bytes]] as const;
+  for(const [name,data] of items){
+   expanded+=data.byteLength;
+   if(expanded>MAX_TOTAL)throw new Error('匯入素材解壓總量超過 250 MiB。');
+   addAsset(entries,name,data);
+  }
+ }
+ return entries;
+}
+export function mergeAssets(existing:AssetMap,incoming:AssetMap,entry:string){
+ const merged=new Map(existing);
+ const directory=entry.slice(0,entry.lastIndexOf('/')+1);
+ for(const [name,data] of incoming){
+  if(/\.html?$/i.test(name)||name.split('/').at(-1)==='project.json')continue;
+  addAsset(merged,directory+name,data);
+ }
+ if(merged.size===existing.size&&[...incoming.keys()].every(name=>/\.html?$/i.test(name)||name.split('/').at(-1)==='project.json'))
+  throw new Error('資料夾內沒有可補入的素材。');
+ checkAssetTotal(merged);
+ return merged;
+}
+export async function readFiles(files:File[]):Promise<{deck?:Deck;source?:string;files:AssetMap;entry?:string;entries?:string[]}> {
+ const entries=await readAssets(files);
  if(entries.has('project.json')){const deck=JSON.parse(strFromU8(entries.get('project.json')!));return{deck:sanitizeDeck(deck),files:entries};}
  const htmls=[...entries.keys()].filter(n=>/\.html?$/i.test(n));if(!htmls.length)throw new Error('找不到 HTML 或 project.json。');
- if([...entries.values()].reduce((n,v)=>n+v.byteLength,0)>MAX_TOTAL)throw new Error('匯入素材解壓總量超過 250 MiB。');
  const entry=htmls.find(n=>/(^|\/)index\.html?$/i.test(n))||htmls[0];return{source:strFromU8(entries.get(entry)!),files:entries,entry,entries:htmls};
 }

@@ -34,7 +34,7 @@ with sync_playwright() as p:
         ctx.add_init_script('window.print=()=>{document.documentElement.dataset.printCalled="true";document.documentElement.dataset.readyAtPrint=document.documentElement.dataset.csPrintReady||"false"}')
         eid=ctx.browser.new_browser_cdp_session().send('Extensions.loadUnpacked',{'path':str(ROOT/'dist')})['id']
         page=ctx.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
-        page.goto(f'chrome-extension://{eid}/index.html');page.wait_for_load_state('networkidle');f=frame(page);f.wait_for_selector('#cs-draw-root',state='attached')
+        page.goto(f'chrome-extension://{eid}/index.html');page.wait_for_load_state('networkidle');page.get_by_role('button',name='新建簡報',exact=True).click();page.get_by_role('button',name='新建瑞士風簡報',exact=True).click();page.frame_locator('iframe').first.locator('#cs-draw-root').wait_for(state='attached');f=frame(page);f.wait_for_selector('#cs-draw-root',state='attached')
         for attempt in range(2):
             page.locator('input[type=file]').first.set_input_files(str(SAMPLE/'維他命C_風格A_在線編輯測試.zip'))
             page.get_by_role('button',name='匯入並開始編輯').click();f.wait_for_selector('[data-slide-id="vitamin-c-cover"]',state='attached');settled(f)
@@ -90,7 +90,7 @@ with sync_playwright() as p:
         viewer.keyboard.press('ArrowRight');steps(vf,4)
         viewer.get_by_role('button',name='P 講者模式').click();check('presenter view remains available',viewer.get_by_role('textbox',name='講者備註').is_visible());viewer.close()
         # Explicit background edits must survive the dark slide's pseudo-element veil.
-        page.get_by_role('button',name='ink-classic',exact=True).click();f.wait_for_function('()=>document.documentElement.dataset.theme==="ink-classic"');settled(f)
+        page.get_by_role('button',name='經典墨色',exact=True).click();f.wait_for_function('()=>document.documentElement.dataset.theme==="ink-classic"');settled(f)
         page.get_by_label('頁面背景',exact=True).fill('#2a543b');settled(f)
         f.locator('#cs-canvas').screenshot(path=str(OUT/'custom-background.png'));check('explicit page background bypasses dark veil',all(abs(a-b)<=3 for a,b in zip(pixel(OUT/'custom-background.png'),(42,84,59))),pixel(OUT/'custom-background.png'))
         with page.expect_popup() as popup:page.get_by_role('button',name='播放',exact=True).click()

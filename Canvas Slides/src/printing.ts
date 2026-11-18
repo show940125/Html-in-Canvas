@@ -33,7 +33,9 @@ export function exportPrintHtml(input:Deck){
 }
 
 export async function waitForPrint(view:Window){
- await Promise.all([...view.document.querySelectorAll('iframe')].map(async frame=>{
+ const frames=[...view.document.querySelectorAll('iframe')];
+ if(!frames.length)throw new Error('列印視窗沒有載入投影片。');
+ await Promise.all(frames.map(async frame=>{
   if(frame.contentDocument?.readyState!=='complete')await new Promise<void>((resolve,reject)=>{
    const timer=setTimeout(()=>reject(new Error('等待列印頁面載入逾時。')),20000);
    frame.addEventListener('load',()=>{clearTimeout(timer);resolve();},{once:true});

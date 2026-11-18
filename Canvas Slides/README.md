@@ -1,6 +1,6 @@
 # Canvas Slides · HTML 簡報編輯器
 
-Html in Canvas 系列的第二個 Chrome 插件。**v0.1.2 是本機預覽版**：匯入 AI 生成的 HTML 簡報，在真實 HTML 上改字、換圖與自由排列，保存專案，再輸出可離線播放的 HTML。
+Html in Canvas 系列的第二個 Chrome 插件。[v0.2.0 預覽版](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-slides-v0.2.0)：匯入 AI 生成的 HTML 簡報，在真實 HTML 上改字、換圖與自由排列，保存專案，再輸出可離線播放的 HTML。
 
 ## 使用
 
@@ -8,7 +8,7 @@ Html in Canvas 系列的第二個 Chrome 插件。**v0.1.2 是本機預覽版**�
 2. 開啟 Chrome 的擴充功能管理頁，啟用開發人員模式。
 3. 按「載入未封裝項目」，選擇含 `manifest.json` 的資料夾。
 4. 按插件圖示，開啟 Canvas Slides。
-5. 選「匯入」開啟 HTML 與素材，或按左上角品牌開啟工作室，建立瑞士風／雜誌風簡報。
+5. 首次開啟可匯入 HTML、開啟五頁「維他命 C」範例，或新建瑞士風／雜誌風簡報。之後可從「專案」續編。
 
 Chrome 156 的原生模式需啟用 `chrome://flags/#canvas-draw-element` 後重新啟動瀏覽器。沒有原生 API 時保留 HTML 編輯、保存與 HTML／專案輸出；PNG 需要原生 API。Chrome 157 已通過本輪隔離設定檔的原生 MV3 自動測試；實體 IME、跨螢幕 DPI 與 GPU 驅動仍待人工驗收。
 
@@ -19,29 +19,32 @@ Chrome 156 的原生模式需啟用 `chrome://flags/#canvas-draw-element` 後重
 - 控制框提供拖拉、縮放、旋轉；屬性欄可輸入 X／Y／寬／高，對齊頁面與其他物件時顯示吸附線。
 - Shift 多選，也可從圖層面板選取，支援群組、解散、對齊、前後順序、鎖定及刪除。
 - 「轉成自由物件」保留量測後的外觀，原位置留下佔位以維持周邊排版；復原可還原文件結構。
-- 拖曳縮圖排序；可新增、複製、刪除及隱藏投影片。備註以頁面 ID 對應，重排後不串頁。
+- 可拖曳縮圖排序，或在縮圖上按 Alt+↑／↓。「投影片動作」集中複製、隱藏、移動與刪除。備註依頁面 ID 保存。
+- 「適合視窗」會顯示畫布實際倍率，也可切換至 100%。窄視窗一次開啟一側欄，寬視窗可按「專注畫布」收起兩側。
 - Ctrl+Z／Ctrl+Shift+Z 復原與重做。方向鍵移動 1px，Shift+方向鍵移動 10px。
 
-資料存於目前 Chrome 設定檔的 IndexedDB，重新開啟會回到上一份專案。文字在組字結束並短暫停止輸入後保存，其他變更自動排入儲存佇列。關閉前確認「已存到此瀏覽器」。移除插件、清除設定檔或換裝置前，先匯出專案 ZIP。
+資料存於目前 Chrome 設定檔的 IndexedDB，重新開啟會回到上一份專案。文字在組字結束並短暫停止輸入後保存。講者頁只更新該頁提詞，與編輯器在不同欄位的修改會合併。同欄位衝突時可查看兩份內容、選擇保留的修改或匯出副本。保存失敗會在文件名稱下方顯示重試與備份入口。
 
 ## 匯入與輸出
 
 | 格式 | 行為 |
 |---|---|
-| HTML＋素材 | 可多選檔案，或從工作室匯入資料夾；相對圖片、樣式與字型會納入專案 |
+| HTML＋素材 | 可拖放、多選檔案或選資料夾。檢查頁顯示頁數、風格、圖片與缺漏，可在同一畫面補入素材 |
 | 一般 ZIP | 自動尋找 `index.html`，也可在匯入介面選擇入口檔案 |
 | 專案 ZIP | 驗證 schema、頁面與路徑後匯入副本，保留原稿、備註、素材和編輯狀態 |
 | 獨立 HTML | 保存已納入素材及打包的播放程式，不依賴插件與 CDN |
 | PNG | 原生 Canvas 完成字型與圖片解碼後，輸出目前投影片 |
 | PDF | 先建立完整靜態列印文件，等所有頁面字型與圖片完成，再選印表機或另存 PDF；文字保持可搜尋 |
 
-投影片依 `#deck > .slide`、Reveal、`.slide` 或頂層 section 等結構辨識。可用 CSS 選擇器明確指定頁面容器。匯入最多 200 頁，HTML 原檔最多 16 MiB，素材解壓總量最多 250 MiB，單個 ZIP 項目最多 64 MiB。新增圖片最多 20 MiB／2400 萬像素。
+投影片依 `#deck > .slide`、Reveal、`.slide` 或頂層 section 等結構辨識。「進階設定」可貼上 HTML、選擇入口或指定頁面容器。匯入最多 200 頁，HTML 原檔最多 16 MiB，素材解壓總量最多 250 MiB，單個 ZIP 項目最多 64 MiB。新增圖片最多 20 MiB／2400 萬像素。
 
 ## 歸藏整合
 
 固定四個本機模板快照，提供 22 種瑞士風與 10 種雜誌風版型，縮圖來自實際 Canvas 輸出。部分參考文件只有縮略骨架，插件已將重複項目展開或依登記結構補成預設版型；來源與改寫範圍見 [SOURCES.md](SOURCES.md)。
 
-播放分頁提供翻頁、講者備註、下一頁預覽、手動計時及黑白屏。輸出的歸藏 HTML 帶有原版講者 runtime，支援其講者畫面及控制功能。編輯時採靜態可讀狀態，播放時執行打包的歸藏動畫。畫面依可用區域等比例放大；點畫面、空白鍵或「下一步」逐項揭示流程，全部揭示後才翻頁。
+「播放」從目前可見投影片開始，旁邊的下拉選單可從首頁播放。播放分頁提供講者備註、下一頁預覽、計時及黑白屏。畫面依可用區域等比例放大，點畫面、空白鍵或「下一步」逐項揭示流程。輸出的歸藏 HTML 含離線播放及講者模式。
+
+匯入與匯出採用 [DesignBookmark Motion](https://designbookmark.com/motion) 的拖放、步驟與完成回饋。畫布與工具列參考 Focus Mode、Sidebar Collapse 及 [Kokonut UI Tool Dock](https://kokonutui.com/docs/navigation/toolbar) 的操作提示。元件用既有 React 與 CSS 實作。
 
 ## 相容性界線
 
@@ -68,6 +71,7 @@ npm run build
 python scripts/acceptance.py
 python scripts/acceptance.py --dom
 python scripts/advanced_acceptance.py
+python scripts/workbench_acceptance.py
 python scripts/layouts_acceptance.py
 node scripts/generate-fixtures.mjs
 python scripts/playback_acceptance.py
