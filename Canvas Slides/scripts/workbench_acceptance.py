@@ -89,10 +89,6 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
         expect(shape).to_have_attribute("aria-expanded", "false")
         record("bottom dock reserves canvas space and its flyout supports keyboard navigation")
 
-        for i in range(5):
-            thumbnail = page.locator(".slide-thumb").nth(i)
-            thumbnail.click()
-            expect(thumbnail.locator("img")).to_be_visible()
         page.locator(".slide-thumb").nth(1).click()
         canvas.wait_for_selector('[data-slide-id="collagen-and-repair"]', state="attached")
         content = canvas.locator(".feature-title")

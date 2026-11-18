@@ -88,3 +88,7 @@ Canvas Slides 正式建置通過。隔離 Chrome 157.0.8103.79 測試通過 31 �
 本機隔離 Chrome 跑通 31 項單元測試與 181 筆瀏覽器檢查。工作台新增 Dock 鍵盤與選單驗收，並在 820px 驗證抽屜切換、關閉及焦點返回。在 390px 驗證工具及儲存失敗時的復原入口，150% DPI 與減少動態效果設定一併覆蓋。原生與 HTML 相容模式、PNG、可離線 HTML、五頁 PDF 與專案 ZIP 往返皆通過。
 
 以 GitHub 下載的 v0.2.0 ZIP 建立維他命 C 範例，保存測試標題和中文提詞。用同一隔離設定檔和安裝路徑載入 v0.3.0 後，驗證插件 ID、專案 ID、標題與提詞皆可讀回，Chrome manifest 與工作台說明為 0.3.0。可用 scripts/upgrade_acceptance.py 重跑。讀屏器、實體輸入法候選窗和系統列印仍待實機驗收。
+
+## v0.3.1 介面外觀
+
+Chrome MV3 驗證日間與夜間的四種配色、匯出主按鈕文字對比至少 4.5:1、鍵盤與 Escape 焦點返回、390px 外觀面板、減少動態效果、重開保存與講者視窗同步。切換外觀後，維他命 C 的原生畫布背景像素維持一致，獨立 HTML 仍採森林墨投影片主題。另以 v0.3.0 發布包驗證升級後保留簡報與中文提詞。重現指令為 python scripts/appearance_acceptance.py 與 scripts/upgrade_acceptance.py。

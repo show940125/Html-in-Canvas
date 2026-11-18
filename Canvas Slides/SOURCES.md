@@ -16,3 +16,5 @@
 ## 石墨工作室 UI
 
 Tool Dock 2.0.0 與 Save Status 1.0.0 改作自 Kokonut UI 的 MIT 元件。保留鍵盤導覽、選取片、工具提示與保存狀態的呈現，並接上既有的 React、CSS 和本機資料流程。授權隨插件附於 `licenses/kokonutui.txt`。 [Tool Dock](https://kokonutui.com/r/toolbar.json) · [Save Status](https://kokonutui.com/r/save-status.json)
+
+「外觀」面板改作 Kokonut UI 的 MIT Morph Popover 1.0.0，使用原生 popover 管理關閉與焦點，沿用縮放淡入手法。日夜切換參考 DesignBookmark 的 Segmented Control。 [Morph Popover 原始碼](https://kokonutui.com/r/morph-popover.json) · [DesignBookmark Motion](https://designbookmark.com/motion)

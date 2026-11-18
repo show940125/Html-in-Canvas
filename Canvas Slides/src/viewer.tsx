@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
+import {AppearanceControl} from './Appearance';
 import {loadDeck,saveTalk} from './storage';
 import {playbackStart,SaveConflict,type Resolution} from './mergeDeck';
 import {Stage,type StageHandle} from './StageFrame';
@@ -102,7 +103,7 @@ function Viewer(){
  useEffect(()=>{
   function keyboard(event:KeyboardEvent){
    if(event.isComposing||event.altKey||event.ctrlKey||event.metaKey)return;
-   if((event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]'))return;
+   if((event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true],.appearance-panel'))return;
    if(event.key==='Escape'&&screen!=='normal'){setScreen('normal');return;}
    if(event.key.toLowerCase()==='p'){setPresenter(value=>!value);return;}
    if(event.key===' '&&(event.target as HTMLElement).closest('button,a'))return;
@@ -121,6 +122,7 @@ function Viewer(){
  return <div className={'viewer studio-viewer '+(presenter?'presenter':'')}>
   <header>
    <b title={deck.title}>{deck.title}</b>
+   <AppearanceControl/>
    <button aria-pressed={presenter} onClick={()=>setPresenter(value=>!value)}>P 講者模式</button>
    <button onClick={()=>document.documentElement.requestFullscreen().catch(error=>setNotice(message(error)))}>全螢幕</button>
   </header>

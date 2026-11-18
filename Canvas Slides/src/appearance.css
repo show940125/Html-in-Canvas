@@ -1,0 +1,99 @@
+/* The editor and player share appearance. The isolated slide stage has its own stylesheet. */
+:root {
+ --studio-scheme:dark;
+ --studio-ink:#f1eee9;--studio-muted:#b6b4af;
+ --studio-shell:#181a1d;--studio-panel:#22252a;--studio-surface:#292d32;
+ --studio-field:#17191c;--studio-stage:#111316;--studio-heading-bg:#1b1e22;
+ --studio-stage-glow:#202227;--studio-border:#393c42;--studio-line:#686e77;
+ --studio-hover:#35383d;--studio-shadow:#0008;--studio-overlay:#090a0cc4;
+ --studio-success:#a6dfb5;--studio-success-bg:#24362d;
+ --studio-error:#ffc2b7;--studio-error-bg:#422c2b;
+ --studio-warning:#ffd19a;
+ --studio-accent:#f2bd73;--studio-on-accent:#221a11;--studio-accent-label:#ffdcaa;
+}
+:root[data-studio-mode=day] {
+ --studio-scheme:light;
+ --studio-ink:#242622;--studio-muted:#555950;
+ --studio-shell:#f8f7f3;--studio-panel:#fffefa;--studio-surface:#f0efea;
+ --studio-field:#fff;--studio-stage:#e6e5df;--studio-heading-bg:#f3f2ed;
+ --studio-stage-glow:#efeee8;--studio-border:#d5d3ca;--studio-line:#858277;
+ --studio-hover:#e5e3db;--studio-shadow:#34332925;--studio-overlay:#24272265;
+ --studio-success:#245c3c;--studio-success-bg:#e5f1e8;
+ --studio-error:#8c3128;--studio-error-bg:#faebe6;
+ --studio-warning:#794611;
+ --studio-accent:#91500d;--studio-on-accent:#fff;--studio-accent-label:#764008;
+}
+:root[data-studio-accent=indigo] {
+ --studio-accent:#a4b9ff;--studio-on-accent:#162043;--studio-accent-label:#c7d3ff;
+}
+:root[data-studio-accent=forest] {
+ --studio-accent:#8ad8af;--studio-on-accent:#122a20;--studio-accent-label:#b4e9cb;
+}
+:root[data-studio-accent=berry] {
+ --studio-accent:#e4a9d4;--studio-on-accent:#35182f;--studio-accent-label:#f3cce8;
+}
+:root[data-studio-mode=day][data-studio-accent=indigo] {
+ --studio-accent:#4156a6;--studio-accent-label:#34488e;--studio-on-accent:#fff;
+}
+:root[data-studio-mode=day][data-studio-accent=forest] {
+ --studio-accent:#276649;--studio-accent-label:#20533c;--studio-on-accent:#fff;
+}
+:root[data-studio-mode=day][data-studio-accent=berry] {
+ --studio-accent:#8b427a;--studio-accent-label:#76346a;--studio-on-accent:#fff;
+}
+body {background:var(--studio-stage);color:var(--studio-ink)}
+.app.graphite,.viewer.studio-viewer {
+ color-scheme:var(--studio-scheme);
+ --ink:var(--studio-ink);--muted:var(--studio-muted);
+ --accent:var(--studio-accent);--on-accent:var(--studio-on-accent);
+ --accent-label:var(--studio-accent-label);
+ --shell:var(--studio-shell);--panel:var(--studio-panel);--surface:var(--studio-surface);
+ --field:var(--studio-field);--border:var(--studio-border);--stage:var(--studio-stage);
+ --pick:color-mix(in srgb,var(--accent) 14%,var(--panel));
+ --pick-strong:color-mix(in srgb,var(--accent) 23%,var(--panel));
+ --pick-line:color-mix(in srgb,var(--accent) 54%,var(--panel));
+ --accent-hover:color-mix(in srgb,var(--accent) 90%,var(--ink));
+ --success:var(--studio-success);--error:var(--studio-error);
+}
+.appearance {flex:none}
+.appearance .appearance-trigger {gap:6px}
+.appearance .appearance-trigger>span {white-space:nowrap}
+.appearance .appearance-trigger[aria-expanded=true] {color:var(--accent-label);background:var(--pick);border-color:var(--pick-line)}
+.appearance-trigger .appearance-dot {height:8px;width:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--pick)}
+.appearance-panel {
+ position:fixed;inset:calc(var(--appearance-top, 58px) + 7px) 12px auto auto;
+ margin:0;width:min(312px,calc(100vw - 24px));max-height:calc(100dvh - var(--appearance-top, 58px) - 20px);overflow:auto;padding:13px;
+ border-radius:13px;border:1px solid var(--studio-line);color:var(--ink);background:var(--panel);
+ box-shadow:0 16px 42px var(--studio-shadow);transform-origin:top right;
+}
+/* Adapted from Kokonut UI Morph Popover's end-aligned opening and ease curve. */
+.appearance-panel:popover-open {animation:appearance-in .18s cubic-bezier(.23,1,.32,1) both}
+@keyframes appearance-in {from {opacity:0;transform:translateY(-3px) scale(.965)} to {opacity:1;transform:none}}
+.appearance-title {display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.appearance-title h2 {margin:0;font-size:15px;font-weight:650}
+.appearance .appearance-close {width:28px;height:28px;min-height:28px;padding:0}
+.appearance fieldset {min-width:0;border:0;margin:0;padding:0}
+.appearance fieldset+fieldset {margin-top:13px}
+.appearance legend {padding:0;margin-bottom:6px;font-size:12px;color:var(--muted)}
+.appearance-modes {
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border-radius:9px;background:var(--field);border:1px solid var(--border);
+}
+.appearance-modes label,.appearance-colors label {position:relative;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid transparent;cursor:pointer}
+.appearance label input {position:absolute;width:1px;height:1px;opacity:0;padding:0;margin:0}
+.appearance label:has(:focus-visible) {outline:2px solid var(--accent);outline-offset:2px}
+.appearance-modes label {min-height:34px;border-radius:6px;color:var(--muted)}
+.appearance-modes label:hover,.appearance-colors label:hover {background:var(--studio-hover)}
+.appearance-modes label:has(:checked),.appearance-colors label:has(:checked) {background:var(--pick);color:var(--accent-label);border-color:var(--pick-line);font-weight:650}
+.appearance-colors {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.appearance-colors label {min-height:57px;flex-direction:column;gap:4px;border-radius:7px;color:var(--muted);font-size:11px}
+.appearance-chip {width:22px;height:22px;display:grid;place-items:center;border-radius:50%;color:#161a20}
+.appearance-chip>svg {visibility:hidden}
+.appearance-colors :checked+.appearance-chip>svg {visibility:visible}
+.studio-viewer {--appearance-top:51px}
+@media(max-width:720px) {.studio-viewer {--appearance-top:45px}}
+@media(max-width:730px) {.appearance .appearance-trigger>span {display:none}}
+@media(max-width:680px) {
+ .graphite {--appearance-top:52px}
+ .graphite .appearance-trigger {padding-inline:5px;min-width:30px}
+}
+@media(prefers-reduced-motion:reduce) {.appearance-panel:popover-open {animation:none}}

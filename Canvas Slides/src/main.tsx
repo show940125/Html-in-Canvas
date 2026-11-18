@@ -2,6 +2,7 @@ import {useEffect,useLayoutEffect,useRef,useState,type ButtonHTMLAttributes} fro
 import {createRoot} from 'react-dom/client';
 import {Stage,type StageHandle} from './StageFrame';
 import {Icon} from './icons';
+import {AppearanceControl} from './Appearance';
 import {Dialog} from './Dialog';
 import {Inspector,colorHex,type Layer,type Selection} from './Inspector';
 import {History,clone,duplicateSlide,emptyNote,newId,type Deck} from './model';
@@ -532,6 +533,7 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
     </SaveStatus>
    </div>}
    <div className="header-actions">
+    <AppearanceControl/>
     <Button className="header-icon" icon="plus" aria-label="匯入" title="匯入" onClick={showImport}><span>匯入</span></Button>
     {deck&&<>
      <div className="action-menu split"><Button className="header-icon" icon="play" aria-label="播放" title={visible?'從目前投影片播放':'沒有可見的投影片'} disabled={!canEdit||!visible} onClick={()=>void play()}><span>播放</span></Button>

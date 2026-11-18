@@ -59,7 +59,7 @@ export function Inspector({deck,layers,selection,tab,setTab,background,resize,se
     </select></label>
     <label className="field-label">頁面背景<input aria-label="頁面背景" type="color" value={background} onChange={e=>perform('background',e.target.value)}/></label>
    </section>
-   {deck.family!=='generic'&&<section className="property-section"><h2>主題</h2><div className="theme-swatches">
+   {deck.family!=='generic'&&<section className="property-section"><h2>投影片主題</h2><div className="theme-swatches">
     {(deck.family==='magazine'?magazineThemes:swissThemes).map(([name,label,color])=><button key={name} title={label} aria-label={label} aria-pressed={deck.rootAttrs['data-theme']===name} style={{background:color}} onClick={()=>setTheme(name)}/>)}
    </div></section>}
   </>:<>
