@@ -12,3 +12,7 @@
 - `src/generated/playback.js` 是建置產物，由 esbuild 自動生成；不手動編輯。
 
 版型擷取、欄位、動畫及講者 runtime 更新後須重新跑版型、離線播放與專案往返驗收。遠端地圖等第三方互動元件尚未列入完整支援。
+
+## 石墨工作室 UI
+
+Tool Dock 2.0.0 與 Save Status 1.0.0 改作自 Kokonut UI 的 MIT 元件。保留鍵盤導覽、選取片、工具提示與保存狀態的呈現，並接上既有的 React、CSS 和本機資料流程。授權隨插件附於 `licenses/kokonutui.txt`。 [Tool Dock](https://kokonutui.com/r/toolbar.json) · [Save Status](https://kokonutui.com/r/save-status.json)

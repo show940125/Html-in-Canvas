@@ -16,6 +16,8 @@ Technical references: Chrome HTML-in-Canvas documentation (Google code samples: 
 
 ## Canvas Slides
 
+- Kokonut UI Tool Dock v2.0.0 by @dorianbaffier and Save Status v1.0.0 by @kokonutui: MIT, Copyright (c) 2025 kokonutUI. Adapted in the editor and bundled with `licenses/kokonutui.txt`.
+
 - guizang-ppt-skill templates and adapted layouts: MIT, Copyright (c) 2026 op7418 (歸藏). The plugin records source hashes and adaptation boundaries in `Canvas Slides/SOURCES.md`.
 - Motion 11.11.17 local runtime: MIT, Copyright (c) 2018 Framer B.V. Its upstream license is bundled in `licenses/motion.txt`.
 - Moveable and its Daybrush dependencies: MIT and package-specific notices.

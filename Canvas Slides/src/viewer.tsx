@@ -6,6 +6,7 @@ import {Stage,type StageHandle} from './StageFrame';
 import type {Deck,Slide} from './model';
 import './style.css';
 import './viewer.css';
+import './graphite-viewer.css';
 
 type Draft={text:string;before:string[];phase:'pending'|'saving'|'saved'|'error';error?:string;other?:string[]};
 const message=(error:unknown)=>error instanceof Error?error.message:String(error);
@@ -117,7 +118,7 @@ function Viewer(){
  if(error)return <div className="viewer-error" role="alert">{error}<p><a href="index.html">回到編輯器</a></p></div>;
  if(!deck||!slide)return <div className="viewer-error" role="status">正在開啟簡報…</div>;
  const draft=drafts[slide.id],next=visible[at+1];
- return <div className={'viewer '+(presenter?'presenter':'')}>
+ return <div className={'viewer studio-viewer '+(presenter?'presenter':'')}>
   <header>
    <b title={deck.title}>{deck.title}</b>
    <button aria-pressed={presenter} onClick={()=>setPresenter(value=>!value)}>P 講者模式</button>
@@ -164,7 +165,7 @@ function Viewer(){
    <button disabled={!ready||at===0} onClick={()=>go(0)}>首頁</button>
    <button disabled={!ready||at===0} onClick={()=>go(at-1)}>上一頁</button>
    <span>{at+1} / {visible.length}</span>
-   <button disabled={!ready} onClick={advance}>下一步</button>
+   <button className="viewer-next" disabled={!ready} onClick={advance}>下一步</button>
    <button disabled={!ready||at===visible.length-1} onClick={()=>go(visible.length-1)}>尾頁</button>
    <button aria-pressed={screen==='black'} onClick={()=>setScreen(screen==='black'?'normal':'black')}>黑屏</button>
    <button aria-pressed={screen==='white'} onClick={()=>setScreen(screen==='white'?'normal':'white')}>白屏</button>

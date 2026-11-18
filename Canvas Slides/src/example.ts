@@ -4,9 +4,10 @@ import notes from '../examples/vitamin-c-style-a/notes.json';
 import fruit from '../examples/vitamin-c-style-a/images/vitamin-c-fruits.png?url';
 import meal from '../examples/vitamin-c-style-a/images/everyday-plate.png?url';
 import {importHtml} from './importer';
+import {strToU8,zipSync} from 'fflate';
 import {template} from './vendor';
 
-export async function openExample(){
+async function exampleSource(){
  const t=template('magazine');
  const files=await Promise.all([['vitamin-c-fruits.png',fruit],['everyday-plate.png',meal]].map(async ([name,url])=>{
   const response=await fetch(url);
@@ -17,5 +18,17 @@ export async function openExample(){
  <title>維他命 C 的好處</title><style>${t.css}\n${css}</style>
  <body class="${t.bodyClass}"><main id="deck">${html}</main>
  <script>const SPEAKER_NOTES=${JSON.stringify(notes)};</script></body></html>`;
+ return {source,files};
+}
+
+export async function openExample(){
+ const {source,files}=await exampleSource();
  return importHtml(source,new Map(files));
+}
+
+export async function exampleZip(){
+ const {source,files}=await exampleSource();
+ // The demo photographs are already compressed. Package the same local assets
+ // on demand so the extension ships only one copy.
+ return zipSync({'index.html':strToU8(source),...Object.fromEntries(files)},{level:0}) as Uint8Array<ArrayBuffer>;
 }

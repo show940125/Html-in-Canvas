@@ -44,6 +44,9 @@ def run(baseline: Path, candidate: Path):
         context = start()
         try:
             page = open_editor(context)
+            if tuple(map(int, before["version"].split("."))) >= (0, 2, 0):
+                page.get_by_role("button", name="開啟範例", exact=True).click()
+                expect(page.locator(".slide-thumb")).to_have_count(5)
             expect(page.get_by_label("簡報名稱", exact=True)).to_be_visible()
             page.get_by_label("簡報名稱", exact=True).fill(title)
             page.get_by_role("button", name="講者備註", exact=False).click()

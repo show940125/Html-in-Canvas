@@ -72,6 +72,23 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
         expect(page.get_by_text("已存到此瀏覽器", exact=True)).to_be_visible()
         expect(page.locator(".statusbar")).to_contain_text("原生畫布")
         record("first launch offers three paths and opens a five-slide editable local example")
+        expect(page.locator(".slide-thumb img")).to_have_count(5)
+        dock = page.get_by_role("navigation", name="編輯工具")
+        stage_box = page.locator(".editor iframe").bounding_box()
+        assert dock.bounding_box()["y"] >= stage_box["y"] + stage_box["height"]
+        dock.get_by_role("button", name="文字", exact=True).focus()
+        page.keyboard.press("ArrowRight")
+        expect(dock.get_by_role("button", name="圖片", exact=True)).to_be_focused()
+        shape = dock.get_by_role("button", name="形狀", exact=True)
+        shape.press("ArrowUp")
+        expect(page.get_by_role("button", name="新增矩形")).to_be_focused()
+        page.keyboard.press("ArrowDown")
+        expect(page.get_by_role("button", name="新增圓形")).to_be_focused()
+        page.keyboard.press("Escape")
+        expect(shape).to_be_focused()
+        expect(shape).to_have_attribute("aria-expanded", "false")
+        record("bottom dock reserves canvas space and its flyout supports keyboard navigation")
+
         for i in range(5):
             thumbnail = page.locator(".slide-thumb").nth(i)
             thumbnail.click()
@@ -128,7 +145,7 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
         record("asset-only folder fills a missing image after an inline selector error")
 
         page.get_by_role("button", name="匯入", exact=True).click()
-        page.locator('input[type=file]').first.set_input_files(example / "維他命C_風格A_在線編輯測試.zip")
+        import_dialog.get_by_role("button", name="試用維他命 C ZIP").click()
         expect(import_dialog.get_by_text("2 張已納入")).to_be_visible()
         assert not import_dialog.get_by_label("匯入 HTML 原始碼").is_visible()
         page.screenshot(path=OUT / "import.png")
@@ -187,8 +204,13 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
         page.get_by_role("button", name="屬性與圖層").click()
         expect(page.locator("#slide-rail")).to_be_hidden()
         expect(page.locator("#slide-inspector")).to_be_visible()
-        page.keyboard.press("Escape")
+        page.screenshot(path=OUT / "compact.png")
+        page.get_by_role("button", name="關閉屬性與圖層").click()
         expect(page.locator("#slide-inspector")).to_be_hidden()
+        expect(page.get_by_role("button", name="屬性與圖層")).to_be_focused()
+        page.get_by_role("button", name="投影片欄").click()
+        page.keyboard.press("Escape")
+        expect(page.get_by_role("button", name="投影片欄")).to_be_focused()
         zoom = page.locator(".statusbar .action-menu>button")
         assert "適合視窗" in zoom.inner_text()
         ratio = page.locator(".editor iframe").evaluate("el=>Math.round(el.getBoundingClientRect().width/el.offsetWidth*100)")
@@ -198,7 +220,21 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
         expect(zoom).to_have_text("100%")
         record("820px viewport has a single drawer and a truthful fit/100% zoom control")
 
+        page.set_viewport_size({"width": 390, "height": 844})
+        assert page.evaluate("document.documentElement.scrollWidth===innerWidth")
+        for item in (dock, page.locator(".header-actions")):
+            bounds = item.bounding_box()
+            assert 0 <= bounds["x"] <= bounds["x"] + bounds["width"] <= 391
+        assert dock.locator(".dock-plate").evaluate("el=>getComputedStyle(el).transitionDuration") == "0s"
+        page.screenshot(path=OUT / "mobile.png")
+        record("390px exposes editor tools; reduced motion disables the dock transition")
+
         page.set_viewport_size({"width": 1440, "height": 900})
+        page.get_by_role("button", name="專注畫布", exact=True).click()
+        expect(page.locator("#slide-rail")).to_be_hidden()
+        page.get_by_role("button", name="恢復面板", exact=True).click()
+        expect(page.locator("#slide-rail")).to_be_visible()
+        record("focus canvas restores both pinned panels")
         page.get_by_role("button", name="講者備註", exact=False).click()
         page.locator(".slide-thumb").nth(1).click()
         canvas.wait_for_selector('[data-slide-id="collagen-and-repair"]', state="attached")
@@ -215,6 +251,7 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
         zip_path = OUT / "workbench-project.zip"
         info.value.save_as(zip_path)
         expect(exporter.get_by_role("status")).to_contain_text("檔案已交給瀏覽器下載")
+        page.screenshot(path=OUT / "export.png")
         with zipfile.ZipFile(zip_path) as archive:
             backup = json.loads(archive.read("project.json"))
         assert backup["title"] == "兩份修改都保留"
@@ -228,9 +265,12 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
             window.originalPut = IDBObjectStore.prototype.put;
             IDBObjectStore.prototype.put = () => { throw new Error('工作台測試：儲存空間暫時不足'); };
         }""")
+        page.set_viewport_size({"width": 390, "height": 844})
         page.get_by_label("簡報名稱").fill("保留未保存的修改")
-        save_alert = page.locator(".saved[role=alert]")
+        save_alert = page.locator(".studio-save[role=alert]")
         expect(save_alert).to_contain_text("儲存空間暫時不足")
+        recovery = save_alert.locator(".studio-save-issue").bounding_box()
+        assert 0 <= recovery["x"] <= recovery["x"] + recovery["width"] <= 390
         expect(page.get_by_label("簡報名稱")).to_have_value("保留未保存的修改")
         save_alert.get_by_role("button", name="匯出備份").click()
         with page.expect_download() as download:
@@ -241,7 +281,8 @@ with sync_playwright() as p, TemporaryDirectory(prefix="canvas-slides-ux-") as p
         page.evaluate("()=>{IDBObjectStore.prototype.put = window.originalPut}")
         save_alert.get_by_role("button", name="重試", exact=True).click()
         expect(page.get_by_text("已存到此瀏覽器", exact=True)).to_be_visible()
-        record("storage failure retains the draft, permits a backup and can be retried")
+        page.set_viewport_size({"width": 1440, "height": 900})
+        record("compact storage recovery controls remain visible and preserve the draft")
 
         page.get_by_role("button", name="匯出", exact=True).click()
         page.evaluate("()=>{window.originalOpen=window.open; window.open=()=>null}")

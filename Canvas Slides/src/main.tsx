@@ -13,10 +13,13 @@ import {useDeckDraft} from './useDeckDraft';
 import {exportPrintHtml,waitForPrint} from './printing';
 import './style.css';
 import './workbench.css';
+import './graphite.css';
+import {DockHint,SaveStatus,ToolDock} from './StudioComponents';
 import {version as packageVersion} from '../package.json';
 
 const extensionRuntime=(globalThis as {chrome?:{runtime?:{getManifest?:()=>{version:string}}}}).chrome?.runtime;
 const appVersion=extensionRuntime?.getManifest?.().version??packageVersion;
+
 
 const titles={templates:'新增投影片',projects:'專案',create:'新建簡報',import:'匯入簡報',export:'匯出簡報',overview:'投影片總覽',help:'操作與快捷鍵',remove:'刪除專案',conflict:'選擇要保留的修改'};
 type DialogName=keyof typeof titles;
@@ -93,6 +96,10 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
  const [activeId,setActiveId]=useState(initial?.slides[0].id);
  const [epoch,setEpoch]=useState(0);
  const [stageReady,setStageReady]=useState(false);
+ const shapeTrigger=useRef<HTMLButtonElement>(null);
+ const drawerTrigger=useRef<HTMLButtonElement>(null);
+ const [examplePreview,setExamplePreview]=useState<Deck>();
+ const slidesToggle=useRef<HTMLButtonElement>(null);
  const [native,setNative]=useState<boolean>();
  const [forceDOM,setForceDOM]=useState(false);
  const [zoom,setZoom]=useState<number>();
@@ -205,7 +212,7 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
   if(id!==slide?.id){
    setSelection([]);setStageReady(false);setActiveId(id);
   }
-  if(compact)setSide(undefined);
+  if(compact&&side)closeDrawer();
  }
  function switchSlide(id:string){return withSlideBoundary(()=>setSlide(id));}
  function navigateHistory(redo=false){
@@ -252,7 +259,11 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
  useEffect(()=>{
   function keyboard(event:KeyboardEvent){
    if(event.isComposing||project.held.current||dialog)return;
-   if(event.key==='Escape'){setMenu(undefined);setSide(undefined);return;}
+   if(event.key==='Escape'){
+    if(menu==='shape')closeShape();else setMenu(undefined);
+    if(side)closeDrawer();
+    return;
+   }
    const target=(event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]');
    if(!(event.ctrlKey||event.metaKey))return;
    const key=event.key.toLowerCase();
@@ -266,6 +277,8 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
   history.current=new History();noteBefore.current=undefined;project.hold(false);
   setStageReady(false);setSelection([]);setPreviews({});setLayers([]);setZoom(undefined);setNative(undefined);
   setFocusMode(false);setSide(compact?'slides':undefined);setTab('properties');setNotesOpen(false);
+  drawerTrigger.current=null;
+  setExamplePreview(undefined);
   setActiveId(next.slides[0].id);
   focusFirst.current=true;
   project.open(next,saved);
@@ -463,36 +476,71 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
  }
  function closeDialog(){setDialog(undefined);}
  function openSample(){
-  void openingProject(async()=>{const {openExample}=await import('./example');await openProject(await openExample());});
+  void openingProject(async()=>{
+   const {openExample}=await import('./example');
+   const example=await openExample();
+   await openProject(example);
+   setExamplePreview(example);
+  });
  }
  const toggleMenu=(which:typeof menu)=>setMenu(current=>current===which?undefined:which);
  const note=slide?.note;
+ const canUseExamplePreview=examplePreview&&deck&&examplePreview.id===deck.id&&
+  JSON.stringify([examplePreview.width,examplePreview.height,examplePreview.rootAttrs,examplePreview.rootStyle,examplePreview.bodyStyle])===design;
+ function thumb(item:Deck['slides'][number]){
+  const position=canUseExamplePreview?examplePreview.slides.findIndex(s=>s.id===item.id&&s.html===item.html):-1;
+  return previews[item.id]||(position>=0?'example-thumbnails/slide-'+(position+1)+'.png':undefined);
+ }
+ function closeDrawer(){
+  setSide(undefined);
+  requestAnimationFrame(()=>(drawerTrigger.current?.isConnected?drawerTrigger.current:slidesToggle.current)?.focus());
+ }
+ function toggleDrawer(key:'slides'|'inspector',trigger:HTMLButtonElement){
+  drawerTrigger.current=trigger;
+  if(side===key){closeDrawer();return;}
+  setSide(key);
+  requestAnimationFrame(()=>document.querySelector<HTMLElement>(key==='slides'?'#slide-rail .slide-thumb.active':'#slide-inspector [aria-selected=true]')?.focus());
+ }
+ function closeShape(){
+  setMenu(undefined);
+  shapeTrigger.current?.focus();
+ }
+ async function tryImportSample(){
+  if(importLock.current)return;
+  importLock.current=true;setImportBusy(true);setImportError('');
+  try{
+   const {exampleZip}=await import('./example');
+   const file=new File([await exampleZip()],'維他命 C · 風格 A.zip',{type:'application/zip'});
+   const read=await readFiles([file]);
+   inspectImport({name:file.name,assets:read.files,entries:read.entries??[],entry:read.entry??'index.html',source:read.source??'',selector:'',project:read.deck});
+  }catch(error){setImportError(errorText(error));}
+  finally{importLock.current=false;setImportBusy(false);}
+ }
  const compactSide=compact||focusMode;
  const canEdit=!!deck&&stageReady;
- return <div className={'app slides-workbench'+(focusMode?' is-focused':'')} onClick={event=>{
+ return <div className={'app slides-workbench graphite'+(focusMode?' is-focused':'')} onClick={event=>{
   if(menu&&!(event.target as Element).closest('.action-menu'))setMenu(undefined);
  }}>
   <header className="app-header">
    <div className="brand" aria-label="Canvas Slides"><span className="brand-mark"><i/><i/><i/><i/></span><span>Canvas <b>Slides</b></span></div>
-   <Button className="project-button" onClick={()=>openDialog('projects')}>專案</Button>
+   <Button className="project-button header-icon" icon="open" aria-label="專案" title="專案" onClick={()=>openDialog('projects')}><span>專案</span></Button>
    {deck&&<div className="document-name">
     <input aria-label="簡報名稱" value={deck.title} onChange={event=>{const value=event.target.value;change(next=>{next.title=value;});}}/>
-    <div className={'saved '+(project.status==='failed'?'error':'')} role={project.status==='failed'?'alert':'status'}>
-     {project.status==='saving'?'正在保存…':project.status==='saved'?'已存到此瀏覽器':project.issue?.message}
+    <SaveStatus phase={project.status} message={project.issue?.message}>
      {project.issue instanceof SaveConflict?<button onClick={()=>openDialog('conflict')}>查看兩份修改</button>:project.issue&&<button onClick={()=>void project.persist(undefined,true).catch(()=>{})}>重試</button>}
      {project.issue&&<><button onClick={()=>openDialog('export')}>匯出備份</button><button disabled={opening} onClick={()=>void keepCopy()}>另存副本</button></>}
-    </div>
+    </SaveStatus>
    </div>}
    <div className="header-actions">
-    <Button onClick={showImport}>匯入</Button>
+    <Button className="header-icon" icon="plus" aria-label="匯入" title="匯入" onClick={showImport}><span>匯入</span></Button>
     {deck&&<>
-     <div className="action-menu split"><Button aria-label="播放" title={visible?'從目前投影片播放':'沒有可見的投影片'} disabled={!canEdit||!visible} onClick={()=>void play()}>播放</Button>
+     <div className="action-menu split"><Button className="header-icon" icon="play" aria-label="播放" title={visible?'從目前投影片播放':'沒有可見的投影片'} disabled={!canEdit||!visible} onClick={()=>void play()}><span>播放</span></Button>
       <button aria-label="播放選項" aria-expanded={menu==='play'} onClick={()=>toggleMenu('play')}>▾</button>
       {menu==='play'&&<div className="menu-panel">
        {visible?<button disabled={!canEdit} onClick={()=>void play(true)}>從首頁播放</button>:<p>請先恢復至少一頁的顯示。</p>}
       </div>}
      </div>
-     <Button className="primary" onClick={()=>openDialog('export')}>匯出</Button>
+     <Button className="primary header-icon" icon="export" aria-label="匯出" title="匯出" onClick={()=>openDialog('export')}><span>匯出</span></Button>
     </>}
    </div>
   </header>
@@ -509,31 +557,12 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
     {projects.length>0&&<><h2>近期專案</h2><div className="recent-list">{projects.map(item=><button key={item.id} onClick={()=>void openingProject(async()=>{const value=await loadDeck(item.id);if(!value)throw new Error('找不到這份專案。');await openProject(value,true);})}>{item.title} · {item.slideCount} 頁</button>)}</div></>}
    </div>
   </main>:<>
-   <nav className="toolbar" aria-label="編輯工具">
-    <div className="tool-group">
-     <Button icon="undo" aria-label="復原 Ctrl+Z" title="復原（Ctrl+Z）" disabled={!history.current.past.length||!canEdit} onClick={()=>void navigateHistory()}>復原</Button>
-     <Button icon="redo" aria-label="重做 Ctrl+Shift+Z" title="重做（Ctrl+Shift+Z）" disabled={!history.current.future.length||!canEdit} onClick={()=>void navigateHistory(true)}>重做</Button>
-    </div>
-    <div className="tool-group">
-     <Button icon="plus" disabled={!canEdit||deck.slides.length>=200} onClick={()=>openDialog('templates')}>新增投影片</Button>
-     <Button icon="text" disabled={!canEdit} onClick={()=>void perform('insert',{kind:'text'})}>文字</Button>
-     <Button icon="image" disabled={!canEdit} onClick={()=>pickImage()}>圖片</Button>
-     <div className="action-menu"><Button icon="shape" disabled={!canEdit} aria-expanded={menu==='shape'} onClick={()=>toggleMenu('shape')}>形狀 ▾</Button>
-      {menu==='shape'&&<div className="menu-panel">{[['rect','新增矩形'],['circle','新增圓形'],['line','新增線條']].map(([kind,label])=><button key={kind} onClick={()=>{setMenu(undefined);void perform('insert',{kind});}}>{label}</button>)}</div>}
-     </div>
-    </div>
-    <div className="tool-group"><Button icon="grid" onClick={()=>openDialog('overview')}>總覽</Button></div>
-    <div className="toolbar-end">
-     {compactSide&&<><Button aria-expanded={side==='slides'} aria-controls="slide-rail" onClick={()=>setSide(side==='slides'?undefined:'slides')}>投影片欄</Button>
-      <Button aria-expanded={side==='inspector'} aria-controls="slide-inspector" onClick={()=>setSide(side==='inspector'?undefined:'inspector')}>屬性與圖層</Button></>}
-     <Button aria-pressed={focusMode} onClick={()=>{setSide(undefined);setFocusMode(!focusMode);}}>{focusMode?'恢復面板':'專注畫布'}</Button>
-     <Button aria-label="操作說明" icon="help" onClick={()=>openDialog('help')}>快捷鍵</Button>
-    </div>
-   </nav>
    <main className="workspace" data-panels={compactSide?'drawer':'pinned'}>
-    {compactSide&&side&&<button className="drawer-shade" aria-label="關閉側欄" onClick={()=>setSide(undefined)}/>}
+    {compactSide&&side&&<button className="drawer-shade" aria-label="關閉側欄" onClick={closeDrawer}/>}
     <aside className="slide-rail" id="slide-rail" aria-label="投影片" hidden={compactSide&&side!=='slides'}>
-     <div className="rail-heading"><span>投影片</span><span>{deck.slides.length} 頁</span></div>
+     <div className="rail-heading"><span>投影片</span><span>{deck.slides.length} 頁</span>
+      {compactSide&&<Button className="drawer-close" icon="close" aria-label="關閉投影片欄" onClick={closeDrawer}/>}
+     </div>
      <div className="slide-list">
       {deck.slides.map((item,i)=><button key={item.id} className={'slide-thumb'+(i===index?' active':'')+(item.hidden?' hidden-slide':'')}
        ref={i===0?firstSlide:undefined} aria-current={i===index?'page':undefined} draggable
@@ -544,16 +573,20 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
         if(event.altKey&&['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();const other=deck.slides[i+(event.key==='ArrowDown'?1:-1)];if(other)moveSlide(item.id,other.id);}
        }}
        aria-label={'投影片 '+(i+1)+' '+(item.note.title||'未命名')+(item.hidden?'，已隱藏':'')}>
-       <span className="slide-number">{i+1}</span>
-       <div className="thumb-paper">{previews[item.id]?<img src={previews[item.id]} alt=""/>:<div className="thumb-placeholder"><b>{item.note.title||'未命名投影片'}</b></div>}</div>
+       <span className="slide-number">{String(i+1).padStart(2,"0")}</span>
+       <div className="thumb-paper">{thumb(item)?<img src={thumb(item)} alt=""/>:<div className="thumb-placeholder"><b>{item.note.title||'未命名投影片'}</b></div>}</div>
        <span className="thumb-title" title={item.note.title}>{item.note.title||'未命名投影片'}{item.hidden?' · 已隱藏':''}</span>
       </button>)}
      </div>
+     <Button className="rail-add" icon="plus" disabled={!canEdit||deck.slides.length>=200} onClick={()=>openDialog('templates')}>加入版型</Button>
     </aside>
     <section className="editor" aria-label="編輯工作台">
      <div className="canvas-heading">
-      <span><strong title={note?.title}>{note?.title||'未命名投影片'}</strong><small>第 {index+1} 頁／共 {deck.slides.length} 頁{slide?.hidden?' · 已隱藏':''}</small></span>
-      <div className="action-menu"><Button aria-expanded={menu==='slide'} onClick={()=>toggleMenu('slide')}>投影片動作 ▾</Button>
+      <span>
+       {compactSide&&<button type="button" ref={slidesToggle} className="toggle-panel" aria-label="投影片欄" aria-expanded={side==='slides'} aria-controls="slide-rail" onClick={event=>toggleDrawer('slides',event.currentTarget)}><Icon name="layers"/></button>}
+       <strong title={note?.title}>{note?.title||'未命名投影片'}</strong><small>第 {index+1} 頁／共 {deck.slides.length} 頁{slide?.hidden?' · 已隱藏':''}</small></span>
+      <div className="canvas-actions">
+       <div className="action-menu"><Button aria-expanded={menu==='slide'} onClick={()=>toggleMenu('slide')}>投影片動作 ▾</Button>
        {menu==='slide'&&<div className="menu-panel">
         <button disabled={deck.slides.length>=200} onClick={()=>slideAction('copy')}>複製投影片</button>
         <button onClick={()=>slideAction('hide')}>{slide?.hidden?'恢復顯示':'播放及輸出時隱藏'}</button>
@@ -561,9 +594,37 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
         <button disabled={index===deck.slides.length-1} onClick={()=>slideAction('down')}>往後移一頁</button>
         <button disabled={deck.slides.length===1} className="danger" onClick={()=>slideAction('delete')}>刪除投影片</button>
        </div>}
+       </div>
+       {compactSide&&<Button className="toggle-panel" icon="settings" aria-label="屬性與圖層" aria-expanded={side==='inspector'} aria-controls="slide-inspector" onClick={event=>toggleDrawer('inspector',event.currentTarget)}/>}
+       <Button className="toggle-panel" icon="focus" aria-label={focusMode?'恢復面板':'專注畫布'} title={focusMode?'恢復面板':'專注畫布'} aria-pressed={focusMode} onClick={()=>{setSide(undefined);setFocusMode(!focusMode);}}/>
       </div>
      </div>
+     <div className="work-area" inert={compactSide&&!!side}>
      <Stage ref={stage} deck={deck} index={index} epoch={epoch} zoom={zoom} forceDOM={forceDOM} onEvent={onEvent} onScale={setScale}/>
+     <div className="dock-zone">
+      <ToolDock>
+       <div className="dock-group dock-history">
+        <Button data-dock-item="" icon="undo" aria-label="復原 Ctrl+Z" aria-keyshortcuts="Control+z" disabled={!history.current.past.length||!canEdit} onClick={()=>void navigateHistory()}><DockHint label="復原" keys="Ctrl Z"/></Button>
+        <Button data-dock-item="" icon="redo" aria-label="重做 Ctrl+Shift+Z" aria-keyshortcuts="Control+Shift+z" disabled={!history.current.future.length||!canEdit} onClick={()=>void navigateHistory(true)}><DockHint label="重做" keys="Ctrl Shift Z"/></Button>
+       </div>
+       <div className="dock-group">
+        <Button data-dock-item="" icon="text" aria-label="文字" disabled={!canEdit} onClick={()=>void perform('insert',{kind:'text'})}><span className="dock-label">文字</span><DockHint label="新增文字"/></Button>
+        <Button data-dock-item="" icon="image" aria-label="圖片" disabled={!canEdit} onClick={()=>pickImage()}><span className="dock-label">圖片</span><DockHint label="新增圖片"/></Button>
+        <div className="action-menu dock-flyout"><button ref={shapeTrigger} type="button" data-dock-item="" disabled={!canEdit} aria-label="形狀" aria-expanded={menu==='shape'} onClick={()=>toggleMenu('shape')}><Icon name="shape"/><span className="dock-label">形狀</span><DockHint label="開啟形狀選單" keys="↑"/></button>
+         {menu==='shape'&&<div className="menu-panel opens-up" onKeyDown={event=>{
+          if(!['ArrowUp','ArrowDown','Home','End'].includes(event.key))return;
+          const items=Array.from(event.currentTarget.querySelectorAll('button')),index=items.indexOf(event.target as HTMLButtonElement);
+          event.preventDefault();
+          (event.key==='Home'?items[0]:event.key==='End'?items.at(-1):items[(index+(event.key==='ArrowUp'?-1:1)+items.length)%items.length])?.focus();
+         }}>{[['rect','新增矩形'],['circle','新增圓形'],['line','新增線條']].map(([kind,label])=><button key={kind} onClick={()=>{closeShape();void perform('insert',{kind});}}>{label}</button>)}</div>}
+        </div>
+       </div>
+       <div className="dock-group">
+        <Button className="dock-add" data-dock-item="" icon="plus" aria-label="新增投影片" disabled={!canEdit||deck.slides.length>=200} onClick={()=>openDialog('templates')}><span className="dock-label">新增頁</span><DockHint label="新增投影片"/></Button>
+        <Button data-dock-item="" icon="grid" aria-label="總覽" onClick={()=>openDialog('overview')}><DockHint label="投影片總覽"/></Button>
+       </div>
+      </ToolDock>
+     </div>
      <div className={'speaker-notes '+(notesOpen?'expanded':'')}>
       <button className="notes-toggle" aria-expanded={notesOpen} aria-controls="slide-notes" onClick={()=>setNotesOpen(!notesOpen)}>
        <Icon name="notes" size={16}/><span>講者備註</span><small>{note?.talk.some(Boolean)?'本頁已有提詞':'加入講述重點與轉場'}</small><Icon name="chevron" size={14}/>
@@ -576,8 +637,10 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
        <label>預計分鐘<input type="number" min="0" step=".1" value={note.minutes??''} onChange={event=>updateNote('minutes',event.target.value)} onBlur={finishNote}/></label>
       </div>}
      </div>
+     </div>
     </section>
     <aside className="inspector" id="slide-inspector" aria-label="屬性與圖層" hidden={compactSide&&side!=='inspector'}>
+     {compactSide&&<div className="drawer-heading"><strong>屬性與圖層</strong><Button className="drawer-close" icon="close" aria-label="關閉屬性與圖層" onClick={closeDrawer}/></div>}
      <Inspector deck={deck} layers={layers} selection={selection} tab={tab} setTab={setTab} background={background}
       resize={(width,height)=>void withSlideBoundary(()=>change(next=>{next.width=width;next.height=height;}))}
       setTheme={name=>void withSlideBoundary(()=>change(next=>{next.rootAttrs['data-theme']=name;}))}
@@ -585,7 +648,8 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
     </aside>
    </main>
    <footer className="statusbar">
-    <div><span className={'mode-dot '+(native?'native':'')}/>{native===undefined?'舞台載入中':native?'原生畫布':'HTML 相容模式'}
+    <div><Button className="status-help" aria-label="操作說明" icon="help" onClick={()=>openDialog('help')}/>
+     <span className={'mode-dot '+(native?'native':'')}/>{native===undefined?'舞台載入中':native?'原生畫布':'HTML 相容模式'}
      <button onClick={()=>void withSlideBoundary(()=>{setStageReady(false);setForceDOM(value=>!value);})}>{forceDOM?'切回原生':'使用 HTML'}</button>
      {deck.warnings.length>0&&<button className="warning" onClick={()=>openDialog('help')}>{deck.warnings.length} 項匯入提示</button>}
     </div>
@@ -626,16 +690,17 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
    </>}
    {dialog==='import'&&<>
     <ol className="import-steps" aria-label="匯入進度">
-     <li aria-current={!importCheck?'step':undefined}>{importCheck?'✓':'1'}　選擇來源</li>
-     <li aria-current={importCheck?'step':undefined}>2　檢查內容</li>
-     <li>3　開始編輯</li>
+     <li aria-current={!importCheck?'step':undefined} data-done={!!importCheck}><span>{importCheck?'✓':'1'}</span>選擇來源</li>
+     <li aria-current={importCheck?'step':undefined}><span>2</span>檢查內容</li>
+     <li><span>3</span>開始編輯</li>
     </ol>
     {!draft.name&&<div className={'file-drop '+(draggingFile?'is-dragging':'')} onDragOver={event=>{event.preventDefault();if(!importBusy)setDraggingFile(true);}}
      onDragLeave={()=>setDraggingFile(false)} onDrop={event=>{event.preventDefault();setDraggingFile(false);void pickFiles(event.dataTransfer.files);}}>
-     <Icon name="open" size={28}/><strong>將 HTML 或 ZIP 拖到這裡</strong>
+     <span className="drop-symbol"><Icon name="open" size={24}/></span><strong>將 HTML 或 ZIP 拖到這裡</strong>
      <div className="project-actions"><button disabled={importBusy} onClick={()=>files.current?.click()}>選擇檔案</button><button disabled={importBusy} onClick={()=>folders.current?.click()}>選擇資料夾</button></div>
+     <button className="sample-import" disabled={importBusy} onClick={()=>void tryImportSample()}>試用維他命 C ZIP <Icon name="arrow" size={15}/></button>
     </div>}
-    {draft.name&&<div className="import-file"><Icon name="open"/><strong>{draft.name}</strong></div>}
+    {draft.name&&<div className="import-file"><span className="drop-symbol"><Icon name="open"/></span><div><strong>{draft.name}</strong><small>{importBusy?'正在檢查':importCheck?'已完成內容檢查':'請檢查下方提示'}</small></div>{importCheck&&<Icon name="check"/>}</div>}
     {importCheck&&<dl className="import-summary">
      <dt>辨識到的頁數</dt><dd>{importCheck.deck.slides.length} 頁</dd>
      <dt>簡報風格</dt><dd>{familyNames[importCheck.deck.family]}</dd>
@@ -683,7 +748,7 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
      setSlide(item.id);setDialog(undefined);
      requestAnimationFrame(()=>document.querySelector<HTMLElement>('.canvas-heading .action-menu>button')?.focus());
     })}>
-     {previews[item.id]?<img src={previews[item.id]} alt=""/>:<div className="overview-placeholder">{item.note.title}</div>}
+     {thumb(item)?<img src={thumb(item)} alt=""/>:<div className="overview-placeholder">{item.note.title}</div>}
      <span>{i+1}　{item.note.title||'未命名投影片'}{item.hidden?' · 已隱藏':''}</span>
     </button>)}
    </div>}
@@ -697,7 +762,7 @@ function App({initial,recents}:{initial?:Deck;recents:RecentProject[]}){
      </button>;
     })}</div>
     {!visible&&<InlineStatus>所有投影片都已隱藏。恢復至少一頁即可輸出 HTML 或 PDF。</InlineStatus>}
-    {exportState&&<InlineStatus error={exportState.phase==='error'}><strong>{formats[exportState.kind].label}</strong>　{exportState.message}
+    {exportState&&<InlineStatus error={exportState.phase==='error'}><span data-export-phase={exportState.phase} className="export-phase"><Icon name={exportState.phase==='done'?'check':exportState.phase==='error'?'help':'open'} size={16}/></span><strong>{formats[exportState.kind].label}</strong>　{exportState.message}
      {exportState.phase==='error'&&<button onClick={()=>void exportAs(exportState.kind)}>重試</button>}
     </InlineStatus>}
    </>}

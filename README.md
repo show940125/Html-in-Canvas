@@ -29,13 +29,13 @@
 
 共用層只承擔 Canvas 瀏覽器能力；每個插件擁有自己的資料模型、互動及版本。
 
-## 第二個插件：Canvas Slides（v0.2.0 預覽版）
+## 第二個插件：Canvas Slides（v0.3.0 預覽版）
 
 把 AI 生成的 HTML 簡報帶進 Chrome 編輯：保留真實 HTML，提供文字、圖片、自由物件、圖層、群組、歸藏版型及本機專案備份。編輯舞台使用固定尺寸的隔離框架與 HTML-in-Canvas，並提供 HTML 相容模式。
 
 ![Canvas Slides HTML 簡報編輯畫面](docs/media/canvas-slides-editor.png)
 
-[下載 v0.2.0](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-slides-v0.2.0) · [功能與安裝](Canvas%20Slides/README.md) · [開始使用](Canvas%20Slides/GUIDE.html) · [來源與適配](Canvas%20Slides/SOURCES.md) · [驗收邊界](Canvas%20Slides/ACCEPTANCE.md) · [Canvas 技術與優化方向](Canvas%20Slides/TECHNICAL.md)
+[下載 v0.3.0](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-slides-v0.3.0) · [功能與安裝](Canvas%20Slides/README.md) · [開始使用](Canvas%20Slides/GUIDE.html) · [來源與適配](Canvas%20Slides/SOURCES.md) · [驗收邊界](Canvas%20Slides/ACCEPTANCE.md) · [Canvas 技術與優化方向](Canvas%20Slides/TECHNICAL.md)
 
 Canvas Slides 擁有獨立的資料庫、建置與版本。一般 HTML 的未知腳本採受限匯入，Chrome 157 已通過原生自動驗證，實體 IME、GPU、跨螢幕 DPI、原生資料夾與系統列印仍待實機驗收。
 

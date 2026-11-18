@@ -27,7 +27,7 @@ with sync_playwright() as p:
   x,y,scale=point(page,frame,title,(50,30));page.mouse.move(x,y);page.mouse.down();page.mouse.move(x+60*scale,y+35*scale,steps=8);page.mouse.up();check('native pointer drags the detached object',title.evaluate('(e)=>e.style.translate') not in ['','none','0px 0px'],title.evaluate('(e)=>e.style.translate'))
   handle=frame.locator('.moveable-se').first;w=title.evaluate('(e)=>e.getBoundingClientRect().width');x,y,scale=point(page,frame,handle);page.mouse.move(x,y);page.mouse.down();page.mouse.move(x+35*scale,y+20*scale,steps=8);page.mouse.up();check('resize control changes actual HTML geometry',title.evaluate('(e)=>e.getBoundingClientRect().width')>w+10)
   page.get_by_role('spinbutton',name='旋轉角度').fill('15');check('rotation writes a real style',title.evaluate('(e)=>e.style.rotate')=='15deg')
-  page.get_by_role('button',name='形狀 ▾').click();page.get_by_role('button',name='新增圓形').click();circle=frame.locator('[data-cs-free="true"]').last;circle_id=circle.get_attribute('data-cs-id')
+  page.get_by_role('button',name='形狀',exact=True).click();page.get_by_role('button',name='新增圓形').click();circle=frame.locator('[data-cs-free="true"]').last;circle_id=circle.get_attribute('data-cs-id')
   rect=lambda node:node.evaluate('(e)=>{const r=e.getBoundingClientRect();return[r.x,r.y,r.width,r.height]}')
   before_group=rect(title)
   page.get_by_role('tab',name='圖層',exact=True).click();page.locator(f'[data-layer-id="{title_id}"]').click(modifiers=['Shift']);page.get_by_role('tab',name='屬性',exact=True).click();page.get_by_role('button',name='群組',exact=True).click();frame.wait_for_selector('[data-cs-group="true"]',state='attached');check('group creates one movable HTML object',frame.locator('[data-cs-group="true"]>[data-cs-id]').count()==2)

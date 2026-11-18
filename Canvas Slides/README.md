@@ -1,6 +1,6 @@
 # Canvas Slides · HTML 簡報編輯器
 
-Html in Canvas 系列的第二個 Chrome 插件。[v0.2.0 預覽版](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-slides-v0.2.0)：匯入 AI 生成的 HTML 簡報，在真實 HTML 上改字、換圖與自由排列，保存專案，再輸出可離線播放的 HTML。
+Html in Canvas 系列的第二個 Chrome 插件。[v0.3.0 預覽版](https://github.com/show940125/Html-in-Canvas/releases/tag/canvas-slides-v0.3.0)：匯入 AI 生成的 HTML 簡報，在真實 HTML 上改字、換圖與自由排列，保存專案，再輸出可離線播放的 HTML。
 
 ## 使用
 
@@ -11,6 +11,12 @@ Html in Canvas 系列的第二個 Chrome 插件。[v0.2.0 預覽版](https://git
 5. 首次開啟可匯入 HTML、開啟五頁「維他命 C」範例，或新建瑞士風／雜誌風簡報。之後可從「專案」續編。
 
 Chrome 156 的原生模式需啟用 `chrome://flags/#canvas-draw-element` 後重新啟動瀏覽器。沒有原生 API 時保留 HTML 編輯、保存與 HTML／專案輸出；PNG 需要原生 API。Chrome 157 已通過本輪隔離設定檔的原生 MV3 自動測試；實體 IME、跨螢幕 DPI 與 GPU 驅動仍待人工驗收。
+
+## 石墨工作室
+
+- 投影片下方的 Dock 集中復原、重做、文字、圖片、形狀、加頁與總覽。聚焦工具後可用左右方向鍵移動，形狀選單可用上下方向鍵開啟。
+- 文件列顯示保存結果及重試，右側依選取物件顯示屬性。窄視窗可切換單一側欄，再按 Esc 或關閉返回舞台。
+- 匯入檢查先顯示頁數、素材與風格，支援試用維他命 C ZIP。播放與講者畫面沿用同一組介面色彩，投影片內容照原稿繪製。
 
 ## 編輯
 
